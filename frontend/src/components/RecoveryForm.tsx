@@ -1,9 +1,9 @@
-
 import { useState, type FormEvent } from "react";
 import {
   createRecoveryCheckin,
   type RecoveryCheckinCreate,
 } from "../services/recovery";
+import { GradientButton } from "@/components/ui/gradient-button";
 
 interface Props {
   onSaved: () => void;
@@ -53,13 +53,13 @@ export default function RecoveryForm({ onSaved }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-semibold">New Recovery Check-in</h2>
+    <form onSubmit={handleSubmit} className="glass-panel p-6 rounded-2xl border border-[#7C3AED]/25 text-[#FFFDF9] space-y-4 max-w-lg mx-auto">
+      <h2 className="text-xl font-bold font-display text-[#FFFDF9]">New Recovery Check-in</h2>
 
       <div>
-        <label>Sleep hours</label>
+        <label className="text-xs font-semibold text-[#E9E2F5] block mb-1.5">Sleep hours</label>
         <input
-          className="block w-full rounded border p-2"
+          className="block w-full rounded-xl bg-[#18132D] border border-[#7C3AED]/30 p-2.5 text-[#FFFDF9] placeholder-[#B8AEC8] focus:outline-none focus:border-[#F97368] focus:ring-1 focus:ring-[#F97368]/40"
           type="number"
           min="0"
           max="24"
@@ -71,9 +71,9 @@ export default function RecoveryForm({ onSaved }: Props) {
       </div>
 
       <div>
-        <label>Resting heart rate (bpm)</label>
+        <label className="text-xs font-semibold text-[#E9E2F5] block mb-1.5">Resting heart rate (bpm)</label>
         <input
-          className="block w-full rounded border p-2"
+          className="block w-full rounded-xl bg-[#18132D] border border-[#7C3AED]/30 p-2.5 text-[#FFFDF9] placeholder-[#B8AEC8] focus:outline-none focus:border-[#F97368] focus:ring-1 focus:ring-[#F97368]/40"
           type="number"
           min="25"
           max="240"
@@ -86,9 +86,9 @@ export default function RecoveryForm({ onSaved }: Props) {
       </div>
 
       <div>
-        <label>HRV (ms, optional)</label>
+        <label className="text-xs font-semibold text-[#E9E2F5] block mb-1.5">HRV (ms, optional)</label>
         <input
-          className="block w-full rounded border p-2"
+          className="block w-full rounded-xl bg-[#18132D] border border-[#7C3AED]/30 p-2.5 text-[#FFFDF9] placeholder-[#B8AEC8] focus:outline-none focus:border-[#F97368] focus:ring-1 focus:ring-[#F97368]/40"
           type="number"
           min="0"
           max="500"
@@ -99,9 +99,9 @@ export default function RecoveryForm({ onSaved }: Props) {
       </div>
 
       <div>
-        <label>Soreness (1–10)</label>
+        <label className="text-xs font-semibold text-[#E9E2F5] block mb-1.5">Soreness (1–10)</label>
         <input
-          className="block w-full rounded border p-2"
+          className="block w-full rounded-xl bg-[#18132D] border border-[#7C3AED]/30 p-2.5 text-[#FFFDF9] placeholder-[#B8AEC8] focus:outline-none focus:border-[#F97368] focus:ring-1 focus:ring-[#F97368]/40"
           type="number"
           min="1"
           max="10"
@@ -112,9 +112,9 @@ export default function RecoveryForm({ onSaved }: Props) {
       </div>
 
       <div>
-        <label>Energy level (1–10)</label>
+        <label className="text-xs font-semibold text-[#E9E2F5] block mb-1.5">Energy level (1–10)</label>
         <input
-          className="block w-full rounded border p-2"
+          className="block w-full rounded-xl bg-[#18132D] border border-[#7C3AED]/30 p-2.5 text-[#FFFDF9] placeholder-[#B8AEC8] focus:outline-none focus:border-[#F97368] focus:ring-1 focus:ring-[#F97368]/40"
           type="number"
           min="1"
           max="10"
@@ -124,15 +124,19 @@ export default function RecoveryForm({ onSaved }: Props) {
         />
       </div>
 
-      <button
+      <GradientButton
         type="submit"
         disabled={saving}
-        className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+        className="w-full py-3 rounded-xl font-bold text-sm tracking-wide uppercase disabled:opacity-50 disabled:pointer-events-none mt-2 cursor-pointer"
       >
         {saving ? "Saving..." : "Save check-in"}
-      </button>
+      </GradientButton>
 
-      {message && <p role="status">{message}</p>}
+      {message && (
+        <p role="status" className="text-xs font-semibold text-[#FDBA8C] text-center mt-2">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

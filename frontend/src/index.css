@@ -1,19 +1,358 @@
 @import "tailwindcss";
+@source "../index.html";
+@source "./**/*.{js,ts,jsx,tsx}";
 
-:root {
-  font-family: Inter, system-ui, sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+@layer base {
+  :root {
+    --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    
+    /* REVORA Violet + Coral + Peach on Deep Plum Palette */
+    --color-bg-primary: #0D0A1F;
+    --color-bg-secondary: #120D26;
+    --color-bg-tertiary: #17102F;
+    --color-bg-card: #18132D;
+    --color-bg-card-elevated: #21183A;
+    --color-bg-card-hover: #261C43;
+    
+    --color-accent-violet: #7C3AED;
+    --color-accent-purple: #8B5CF6;
+    --color-accent-lavender: #A78BFA;
+    --color-accent-coral: #F97368;
+    --color-accent-coral-bright: #FF6B6B;
+    --color-accent-peach: #FDBA8C;
+    --color-accent-peach-light: #FED7AA;
+    
+    --color-text-primary: #FFFDF9;
+    --color-text-secondary: #E9E2F5;
+    --color-text-muted: #B8AEC8;
+    --color-border: rgba(139, 92, 246, 0.20);
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: #0D0A1F;
+    color: #FFFDF9;
+    font-family: var(--font-body);
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+}
+
+/* REVORA Violet + Coral Glass & Card Utilities */
+.glass-panel {
+  background: rgba(24, 19, 45, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139, 92, 246, 0.20);
+}
+
+.glass-panel-hover {
+  background: #18132D;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(139, 92, 246, 0.20);
+  box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  background: #21183A;
+  border-color: rgba(249, 115, 104, 0.45);
+  box-shadow: 0 16px 36px -8px rgba(124, 58, 237, 0.3), 0 0 20px -2px rgba(249, 115, 104, 0.25);
+  transform: translateY(-3px);
+}
+
+.glass-card-surface {
+  background: #18132D;
+  border: 1px solid rgba(139, 92, 246, 0.20);
+  box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.6);
+}
+
+.glass-card-elevated {
+  background: #21183A;
+  border: 1px solid rgba(139, 92, 246, 0.30);
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.7);
+}
+
+/* Gradients */
+.text-gradient-revora {
+  background: linear-gradient(135deg, #7C3AED 0%, #FF6B6B 50%, #F97368 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-coral-peach {
+  background: linear-gradient(135deg, #F97368 0%, #FF6B6B 50%, #FDBA8C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-violet-coral {
+  background: linear-gradient(135deg, #FFFDF9 0%, #A78BFA 45%, #F97368 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Athletic Action Buttons */
+.btn-primary-athletic {
+  position: relative;
+  background: linear-gradient(135deg, #7C3AED 0%, #FF6B6B 50%, #F97368 100%);
+  color: #FFFDF9;
+  font-weight: 700;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 253, 249, 0.15);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn-primary-athletic:hover {
+  background: linear-gradient(135deg, #8B5CF6 0%, #FF6B6B 50%, #FDBA8C 100%);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1.5px);
+}
+
+.btn-secondary-athletic {
+  background: rgba(24, 19, 45, 0.85);
+  color: #FFFDF9;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  font-weight: 600;
+  border-radius: 9999px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn-secondary-athletic:hover {
+  background: #21183A;
+  border-color: rgba(249, 115, 104, 0.6);
+  color: #FFFDF9;
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* Subtle Glow Effects */
+.glow-violet-subtle {
+  box-shadow: 0 0 24px -4px rgba(124, 58, 237, 0.3);
+}
+
+.glow-coral-subtle {
+  box-shadow: 0 0 24px -4px rgba(249, 115, 104, 0.3);
+}
+
+.glow-peach-subtle {
+  box-shadow: 0 0 24px -4px rgba(253, 186, 140, 0.25);
+}
+
+/* Smooth custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0A1F;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 104, 0.5);
+}
+
+/* Smooth Pulse Animation */
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.98); }
+}
+
+.animate-subtle-pulse {
+  animation: subtle-pulse 3s infinite ease-in-out;
+}
+
+/* ── Phase 5: Assessment Wizard Motion & Transitions ──────────────────── */
+
+@keyframes page-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes step-slide-right {
+  0% {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-step-slide-right {
+  animation: step-slide-right 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes step-slide-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-step-slide-left {
+  animation: step-slide-left 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes flip-horizontal {
+  0% {
+    opacity: 0.2;
+    transform: rotateY(70deg) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
+.animate-body-flip {
+  animation: flip-horizontal 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+@keyframes chip-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-chip-pop {
+  animation: chip-pop 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes active-region-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 6px rgba(249, 115, 104, 0.6)) drop-shadow(0 0 12px rgba(124, 58, 237, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(249, 115, 104, 0.85)) drop-shadow(0 0 20px rgba(124, 58, 237, 0.6));
+  }
+}
+
+.animate-region-glow {
+  animation: active-region-glow 2.5s infinite ease-in-out;
+}
+
+/* ── Prefers-reduced-motion Support ──────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── REVORA GradientButton System (Crisp, Premium, No Glow) ─────── */
+.gradient-button {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  color: #FFFDF9;
+  font-family: var(--font-display);
+  background: linear-gradient(135deg, #7C3AED 0%, #FF6B6B 52%, #F97368 100%);
+  border: 1px solid rgba(255, 253, 249, 0.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.14);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, opacity 0.2s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-* {
-  box-sizing: border-box;
+.gradient-button:hover {
+  background: linear-gradient(135deg, #8B5CF6 0%, #FF6B6B 48%, #FDBA8C 100%);
+  border-color: rgba(255, 253, 249, 0.32);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28), 0 1px 4px rgba(0, 0, 0, 0.16);
+  transform: translateY(-1.5px);
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+.gradient-button:active {
+  transform: translateY(0px) scale(0.99);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.gradient-button:disabled,
+.gradient-button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+  transform: none;
+}
+
+.gradient-button-variant {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  background: rgba(24, 19, 45, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.32);
+  color: #FFFDF9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, opacity 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.gradient-button-variant:hover {
+  background: rgba(33, 24, 58, 0.96);
+  border-color: rgba(249, 115, 104, 0.5);
+  color: #FFFDF9;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1.5px);
+}
+
+.gradient-button-variant:active {
+  transform: translateY(0px) scale(0.99);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.gradient-button-variant:disabled,
+.gradient-button-variant[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+  transform: none;
 }
