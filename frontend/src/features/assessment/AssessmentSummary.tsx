@@ -1,5 +1,5 @@
 import React from "react";
-import { Edit3, Activity, Sparkles, Flame } from "lucide-react";
+import { Edit3, Activity, Target, Flame } from "lucide-react";
 import { ALL_BODY_REGIONS } from "./BodyMapStep";
 import type { AssessmentData } from "@/services/assessment";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -108,7 +108,7 @@ export const AssessmentSummary: React.FC<AssessmentSummaryProps> = ({
       <div className="p-5 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-[#7C3AED]/15">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#A78BFA]" />
+            <Target className="w-4 h-4 text-[#A78BFA]" />
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#FDBA8C] font-display">
               Affected Body Areas
             </h4>

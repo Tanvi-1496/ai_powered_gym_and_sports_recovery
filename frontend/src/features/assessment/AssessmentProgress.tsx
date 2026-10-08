@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Activity, Sparkles, AlertCircle, FileCheck } from "lucide-react";
+import { Check, Activity, Target, Flame, ClipboardCheck } from "lucide-react";
 
 import { GradientButton } from "@/components/ui/gradient-button";
 
@@ -11,9 +11,9 @@ interface AssessmentProgressProps {
 
 const STEPS = [
   { id: 1, label: "Activity", icon: Activity },
-  { id: 2, label: "Body Area", icon: Sparkles },
-  { id: 3, label: "Symptoms", icon: AlertCircle },
-  { id: 4, label: "Review", icon: FileCheck },
+  { id: 2, label: "Body Area", icon: Target },
+  { id: 3, label: "Symptoms", icon: Flame },
+  { id: 4, label: "Review", icon: ClipboardCheck },
 ];
 
 export const AssessmentProgress: React.FC<AssessmentProgressProps> = ({

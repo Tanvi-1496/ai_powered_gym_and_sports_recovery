@@ -6,7 +6,6 @@ import {
   Dumbbell,
   Repeat,
   ShieldAlert,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import type { RecoveryActivity } from "@/types/recovery";
@@ -129,7 +128,7 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
           />
 
           <div className="w-14 h-14 mx-auto rounded-2xl bg-[#21183A] border border-[#7C3AED]/40 flex items-center justify-center shadow-md">
-            <Sparkles className="w-7 h-7 text-[#FDBA8C]" />
+            <Dumbbell className="w-7 h-7 text-[#FDBA8C]" />
           </div>
 
           <div className="max-w-md mx-auto space-y-1.5">

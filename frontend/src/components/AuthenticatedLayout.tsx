@@ -197,9 +197,9 @@ export const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
                   />
                   <span>New Assessment</span>
                 </div>
-                <span className="text-[10px] font-bold text-[#FDBA8C] bg-[#F97368]/15 px-2 py-0.5 rounded-full border border-[#F97368]/30">
-                  AI
-                </span>
+                {isNavActive("/assessment") && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shadow-sm shadow-[#F97368]/80" />
+                )}
               </Link>
             </div>
 

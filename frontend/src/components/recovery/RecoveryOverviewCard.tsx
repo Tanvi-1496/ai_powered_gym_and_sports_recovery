@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, Clock, Cpu, Layers, Sparkles, Target } from "lucide-react";
+import { Activity, Clock, HeartPulse, Layers, Workflow, Target } from "lucide-react";
 import type { AssessmentData } from "@/services/assessment";
 import { getAnatomyLabel } from "@/data/anatomyManifest";
 import { ALL_BODY_REGIONS } from "@/features/assessment/BodyMapStep";
@@ -47,7 +47,7 @@ export const RecoveryOverviewCard: React.FC<RecoveryOverviewCardProps> = ({ asse
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/40 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-[#FDBA8C]" />
+            <Workflow className="w-5 h-5 text-[#FDBA8C]" />
           </div>
           <div>
             <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-[#FDBA8C]">
@@ -60,7 +60,7 @@ export const RecoveryOverviewCard: React.FC<RecoveryOverviewCardProps> = ({ asse
         </div>
 
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#7C3AED]/15 border border-[#7C3AED]/35 text-xs font-bold uppercase tracking-wider text-[#FDBA8C] self-start sm:self-auto">
-          <Cpu className="w-3.5 h-3.5 text-[#F97368]" />
+          <HeartPulse className="w-3.5 h-3.5 text-[#F97368]" />
           <span>Recommendation Engine • Pending</span>
         </div>
       </div>
