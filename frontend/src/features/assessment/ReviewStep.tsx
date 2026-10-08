@@ -73,12 +73,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin text-[#FFFDF9]" />
+              <Loader2 className="w-5 h-5 animate-spin text-[#17102F]" />
               <span>Analyzing...</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-5 h-5 text-[#FDBA8C]" />
+              <Sparkles className="w-5 h-5 text-[#17102F]" />
               <span>Analyze My Symptoms</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
             </>

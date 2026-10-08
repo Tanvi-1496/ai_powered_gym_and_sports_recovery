@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, ShieldCheck, HeartPulse, ArrowRight, Check } from "lucide-react";
+import { Target, ShieldAlert, Workflow, ArrowRight, Check } from "lucide-react";
 
 export const HowItWorks: React.FC = () => {
   const steps = [
@@ -9,8 +9,7 @@ export const HowItWorks: React.FC = () => {
       headline: "Tell us where it hurts and describe your symptoms.",
       description:
         "Input pain location, onset trigger, movement limitations, and current training load through our intuitive athlete symptom mapper.",
-      icon: Activity,
-      gradient: "from-[#7C3AED] to-[#8B5CF6]",
+      icon: Target,
       iconBg: "bg-[#7C3AED]/20",
       iconColor: "text-[#A78BFA]",
       badgeBg: "bg-[#7C3AED]/15 text-[#A78BFA] border-[#7C3AED]/30",
@@ -25,10 +24,9 @@ export const HowItWorks: React.FC = () => {
       headline: "Get a preliminary injury-risk assessment based on your inputs.",
       description:
         "Our AI engine cross-references biomechanical stress models and athletic recovery data to estimate risk level and likely factors.",
-      icon: ShieldCheck,
-      gradient: "from-[#F97368] to-[#FF6B6B]",
-      iconBg: "bg-[#F97368]/20",
-      iconColor: "text-[#F97368]",
+      icon: ShieldAlert,
+      iconBg: "bg-[#7C3AED]/20",
+      iconColor: "text-[#A78BFA]",
       badgeBg: "bg-[#F97368]/15 text-[#F97368] border-[#F97368]/30",
       accentBorder: "hover:border-[#F97368]/50",
       numberColor: "text-[#261C43] group-hover:text-[#F97368]/40",
@@ -41,10 +39,9 @@ export const HowItWorks: React.FC = () => {
       headline: "Follow personalized recovery guidance, exercises and rest recommendations.",
       description:
         "Receive structured active recovery protocols, targeted mobility routines, load management strategies, and return-to-train milestones.",
-      icon: HeartPulse,
-      gradient: "from-[#FB923C] to-[#FDBA8C]",
-      iconBg: "bg-[#FDBA8C]/20",
-      iconColor: "text-[#FDBA8C]",
+      icon: Workflow,
+      iconBg: "bg-[#7C3AED]/20",
+      iconColor: "text-[#A78BFA]",
       badgeBg: "bg-[#FDBA8C]/15 text-[#FDBA8C] border-[#FDBA8C]/30",
       accentBorder: "hover:border-[#FDBA8C]/50",
       numberColor: "text-[#261C43] group-hover:text-[#FDBA8C]/40",
@@ -96,10 +93,8 @@ export const HowItWorks: React.FC = () => {
                 <div>
                   <div className="flex items-center justify-between mb-8">
                     {/* Step Icon Badge */}
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-tr ${step.gradient} p-0.5 shadow-md shadow-[#0D0A1F]/60 group-hover:scale-105 transition-transform duration-300`}>
-                      <div className="w-full h-full bg-[#18132D] rounded-[14px] flex items-center justify-center">
-                        <IconComponent className={`w-7 h-7 ${step.iconColor}`} />
-                      </div>
+                    <div className="w-14 h-14 rounded-2xl bg-[#18132D] border border-[#7C3AED]/30 flex items-center justify-center group-hover:scale-105 group-hover:border-[#A78BFA]/50 transition-all duration-300 shadow-md">
+                      <IconComponent className={`w-7 h-7 ${step.iconColor}`} />
                     </div>
 
                     {/* Number Stamp */}

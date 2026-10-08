@@ -596,7 +596,7 @@ export const RegisterPage: React.FC = () => {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin text-[#FFFDF9]" />
+                    <Loader2 className="w-5 h-5 animate-spin text-[#17102F]" />
                     <span>Creating Account...</span>
                   </>
                 ) : (

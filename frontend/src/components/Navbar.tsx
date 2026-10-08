@@ -112,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onStartAssessment }) => {
                 {/* Dashboard CTA */}
                 <GradientButton
                   onClick={() => navigate("/dashboard")}
-                  className="min-w-0 px-4 py-2 text-xs sm:text-sm flex items-center gap-2 rounded-full font-bold uppercase tracking-wide"
+                  className="min-w-0 px-4 py-2 text-xs sm:text-sm flex items-center gap-2 rounded-full font-bold uppercase tracking-wide cursor-pointer"
                 >
                   <span>Dashboard</span>
                   <ArrowRight className="w-4 h-4" />
@@ -122,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onStartAssessment }) => {
                 <GradientButton
                   variant="variant"
                   onClick={handleLogout}
-                  className="min-w-0 px-3 py-2 rounded-xl text-xs font-semibold text-[#B8AEC8] hover:text-[#FF6B6B] flex items-center gap-1.5"
+                  className="min-w-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
                   title="Sign out of your account"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -135,13 +135,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onStartAssessment }) => {
                 <GradientButton
                   variant="variant"
                   onClick={() => navigate("/login")}
-                  className="min-w-0 px-4 py-2 text-xs sm:text-sm font-semibold rounded-full"
+                  className="min-w-0 px-4 py-2 text-xs sm:text-sm font-semibold rounded-full cursor-pointer"
                 >
                   Login
                 </GradientButton>
                 <GradientButton
                   onClick={onStartAssessment || (() => handleNavClick("cta-section"))}
-                  className="min-w-0 px-5 py-2.5 text-xs sm:text-sm flex items-center gap-2 rounded-full font-bold uppercase tracking-wide"
+                  className="min-w-0 px-5 py-2.5 text-xs sm:text-sm flex items-center gap-2 rounded-full font-bold uppercase tracking-wide cursor-pointer"
                 >
                   <span>Get Started</span>
                   <ArrowRight className="w-4 h-4" />

@@ -141,17 +141,17 @@ export const PlatformIntro: React.FC = () => {
               const isSelected = activeTab === pillar.id;
 
               return (
-                <GradientButton
+                <button
                   key={pillar.id}
-                  variant={isSelected ? "default" : "variant"}
+                  type="button"
                   onClick={() => setActiveTab(pillar.id)}
-                  className={`w-full min-w-0 text-left p-5 rounded-2xl border flex items-start justify-start gap-4 font-normal h-auto ${
+                  className={`w-full min-w-0 text-left p-5 rounded-2xl border flex items-start justify-start gap-4 transition-all duration-200 cursor-pointer ${
                     isSelected
-                      ? "scale-[1.01]"
-                      : ""
+                      ? "bg-[#21183A] border-[#7C3AED]/70 shadow-lg shadow-[#7C3AED]/15 scale-[1.01]"
+                      : "bg-[#18132D] border-[#7C3AED]/20 hover:bg-[#1E1638] hover:border-[#7C3AED]/40"
                   }`}
                 >
-                  <div className={`p-3 rounded-xl ${pillar.iconBg} ${pillar.iconColor} shrink-0 mt-0.5 shadow-sm`}>
+                  <div className="p-3 rounded-xl bg-[#7C3AED]/15 border border-[#A78BFA]/20 text-[#A78BFA] shrink-0 mt-0.5 shadow-sm">
                     <Icon className="w-5 h-5" />
                   </div>
 
@@ -168,7 +168,7 @@ export const PlatformIntro: React.FC = () => {
                       {pillar.description}
                     </p>
                   </div>
-                </GradientButton>
+                </button>
               );
             })}
           </div>
@@ -236,10 +236,10 @@ export const PlatformIntro: React.FC = () => {
 
                 <GradientButton
                   asChild
-                  className="min-w-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md"
+                  className="min-w-0 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer"
                 >
                   <a href="#interactive-preview" className="inline-flex items-center gap-2">
-                    <Zap className="w-3.5 h-3.5 text-[#FFFDF9]" />
+                    <Zap className="w-3.5 h-3.5 text-[#17102F]" />
                     <span>Test Sample Triage</span>
                   </a>
                 </GradientButton>

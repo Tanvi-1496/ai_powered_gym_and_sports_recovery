@@ -103,12 +103,12 @@ export const ActivityStep: React.FC<ActivityStepProps> = ({
                 <div className="mt-3.5 space-y-0.5 text-left">
                   <h3
                     className={`font-bold text-sm sm:text-base transition-colors ${
-                      isSelected ? "text-[#FFFDF9] font-display" : "text-[#E9E2F5] group-hover:text-[#FFFDF9]"
+                      isSelected ? "text-[#17102F] font-display" : "text-[#E9E2F5] group-hover:text-[#FFFDF9]"
                     }`}
                   >
                     {act.label}
                   </h3>
-                  <p className="text-xs text-[#B8AEC8] leading-tight">{act.desc}</p>
+                  <p className={`text-xs leading-tight ${isSelected ? "text-[#17102F]/80 font-medium" : "text-[#B8AEC8]"}`}>{act.desc}</p>
                 </div>
               </GradientButton>
             );

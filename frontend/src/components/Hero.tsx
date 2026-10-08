@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { ArrowRight, Play, ShieldAlert, Sparkles, Activity, ChevronDown } from "lucide-react";
+import { ArrowRight, Play, ShieldAlert, Target, Workflow, ChevronDown } from "lucide-react";
 import { GradientButton } from "@/components/ui/gradient-button";
 
 interface HeroProps {
@@ -116,18 +116,6 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
       {/* ── Hero Foreground Content ──────────────────────────────────── */}
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 w-full">
         <div className="max-w-3xl flex flex-col items-start text-left">
-          
-          {/* AI-POWERED ATHLETE RECOVERY Label */}
-          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#7C3AED]/15 border border-[#7C3AED]/30 backdrop-blur-md shadow-sm mb-6 group cursor-default">
-            <span className="w-2 h-2 rounded-full bg-[#F97368] animate-ping" />
-            <span className="w-2 h-2 -ml-4 rounded-full bg-[#F97368]" />
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-[#FDBA8C] font-display">
-              AI-POWERED ATHLETE RECOVERY
-            </span>
-            <span className="text-[10px] text-[#B8AEC8] hidden sm:inline pl-1 border-l border-[#7C3AED]/25">
-              v2.4 Live Engine
-            </span>
-          </div>
 
           {/* Main Headline: Recover Smarter. Train Safer. */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-[#FFFDF9] tracking-tight leading-[1.05] font-display max-w-3xl drop-shadow-sm">
@@ -146,7 +134,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
             <GradientButton
               onClick={handleStartRecovery}
-              className="px-8 py-4 text-sm sm:text-base flex items-center justify-center gap-3 rounded-full cursor-pointer group shadow-xl"
+              className="px-8 py-4 text-sm sm:text-base flex items-center justify-center gap-3 rounded-full cursor-pointer group shadow-md"
             >
               <span className="font-bold tracking-wide">Start Your Recovery</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -157,7 +145,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
               onClick={scrollToHowItWorks}
               className="px-7 py-4 text-sm sm:text-base flex items-center justify-center gap-2.5 rounded-full cursor-pointer"
             >
-              <Play className="w-4 h-4 text-[#F97368] fill-[#F97368]/20" />
+              <Play className="w-4 h-4 text-[#FDBA8C] fill-[#FDBA8C]/20" />
               <span>How It Works</span>
             </GradientButton>
           </div>
@@ -165,8 +153,8 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
           {/* Athletic Trust & Validation Badges */}
           <div className="mt-12 pt-8 border-t border-[#7C3AED]/20 grid grid-cols-2 sm:grid-cols-3 gap-6 w-full max-w-2xl">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/15 border border-[#7C3AED]/30 flex items-center justify-center text-[#A78BFA] shrink-0">
-                <Activity className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 border border-[#A78BFA]/20 flex items-center justify-center text-[#A78BFA] shrink-0">
+                <Target className="w-4 h-4" />
               </div>
               <div>
                 <div className="text-xs font-bold text-[#FFFDF9]">Symptom Mapping</div>
@@ -175,7 +163,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#F97368]/15 border border-[#F97368]/30 flex items-center justify-center text-[#F97368] shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 border border-[#A78BFA]/20 flex items-center justify-center text-[#A78BFA] shrink-0">
                 <ShieldAlert className="w-4 h-4" />
               </div>
               <div>
@@ -185,8 +173,8 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
             </div>
 
             <div className="flex items-center gap-3 col-span-2 sm:col-span-1">
-              <div className="w-8 h-8 rounded-xl bg-[#FDBA8C]/15 border border-[#FDBA8C]/30 flex items-center justify-center text-[#FDBA8C] shrink-0">
-                <Sparkles className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 border border-[#A78BFA]/20 flex items-center justify-center text-[#A78BFA] shrink-0">
+                <Workflow className="w-4 h-4" />
               </div>
               <div>
                 <div className="text-xs font-bold text-[#FFFDF9]">Smart Protocols</div>
@@ -208,7 +196,7 @@ export const Hero: React.FC<HeroProps> = ({ onStartRecovery, onHowItWorks }) => 
         <span className="text-[11px] uppercase font-bold tracking-wider text-[#B8AEC8] group-hover:text-[#FFFDF9] transition-colors">
           Explore Platform
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-[#F97368] animate-bounce" />
+        <ChevronDown className="w-3.5 h-3.5 text-[#FDBA8C] animate-bounce" />
       </GradientButton>
     </section>
   );

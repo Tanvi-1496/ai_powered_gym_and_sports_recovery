@@ -92,7 +92,7 @@ export const AnatomyInfoPanel: React.FC<AnatomyInfoPanelProps> = ({
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 text-[#FDBA8C]" />
+              <Sparkles className="w-4 h-4 text-[#17102F]" />
               <span>Confirm Area</span>
             </>
           )}

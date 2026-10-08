@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { 
-  Activity, 
+  Target, 
   AlertTriangle, 
   CheckCircle2, 
   Dumbbell, 
-  Info
+  Info,
+  Activity
 } from "lucide-react";
-import { GradientButton } from "@/components/ui/gradient-button";
 
 interface InjuryZone {
   id: string;
@@ -158,17 +158,19 @@ export const InteractiveAssessmentPreview: React.FC = () => {
           {zones.map((zone) => {
             const isSelected = selectedZone.id === zone.id;
             return (
-              <GradientButton
+              <button
                 key={zone.id}
-                variant={isSelected ? "default" : "variant"}
+                type="button"
                 onClick={() => setSelectedZone(zone)}
-                className={`min-w-0 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold tracking-wide flex items-center gap-2.5 ${
-                  isSelected ? "scale-105" : ""
+                className={`min-w-0 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold tracking-wide flex items-center gap-2.5 transition-all duration-200 cursor-pointer ${
+                  isSelected
+                    ? "bg-[#21183A] border border-[#7C3AED]/70 text-[#FFFDF9] shadow-md shadow-[#7C3AED]/20 scale-105"
+                    : "bg-[#18132D] border border-[#7C3AED]/20 text-[#B8AEC8] hover:bg-[#21183A] hover:text-[#FFFDF9]"
                 }`}
               >
-                <Activity className={`w-4 h-4 ${isSelected ? "text-[#FFFDF9]" : "text-[#A78BFA]"}`} />
+                <Target className={`w-4 h-4 ${isSelected ? "text-[#FDBA8C]" : "text-[#A78BFA]"}`} />
                 <span>{zone.name.split("/")[0]}</span>
-              </GradientButton>
+              </button>
             );
           })}
         </div>

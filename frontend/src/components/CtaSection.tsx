@@ -54,7 +54,7 @@ export const CtaSection: React.FC<CtaSectionProps> = ({ onStartAssessment }) => 
           <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <GradientButton
               onClick={handleAction}
-              className="px-10 py-4 text-base sm:text-lg flex items-center justify-center gap-3 rounded-full group shadow-2xl"
+              className="px-10 py-4 text-base sm:text-lg flex items-center justify-center gap-3 rounded-full group shadow-lg cursor-pointer"
             >
               <span className="font-extrabold tracking-wide uppercase">Start Assessment</span>
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />

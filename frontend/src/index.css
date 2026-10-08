@@ -103,40 +103,38 @@
 /* Athletic Action Buttons */
 .btn-primary-athletic {
   position: relative;
-  background: linear-gradient(135deg, #7C3AED 0%, #FF6B6B 50%, #F97368 100%);
-  color: #FFFDF9;
+  background: #FDBA8C;
+  color: #17102F;
   font-weight: 700;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 253, 249, 0.15);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: all 0.2s ease;
   -webkit-font-smoothing: antialiased;
 }
 
 .btn-primary-athletic:hover {
-  background: linear-gradient(135deg, #8B5CF6 0%, #FF6B6B 50%, #FDBA8C 100%);
-  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.3);
-  transform: translateY(-1.5px);
+  background: #F9A875;
+  color: #17102F;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+  transform: translateY(-1px);
 }
 
 .btn-secondary-athletic {
-  background: rgba(24, 19, 45, 0.85);
-  color: #FFFDF9;
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  background: transparent;
+  color: #FDBA8C;
+  border: 1px solid #FDBA8C;
   font-weight: 600;
   border-radius: 9999px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
   -webkit-font-smoothing: antialiased;
 }
 
 .btn-secondary-athletic:hover {
-  background: #21183A;
-  border-color: rgba(249, 115, 104, 0.6);
-  color: #FFFDF9;
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  background: rgba(253, 186, 140, 0.10);
+  border-color: #FDBA8C;
+  color: #FDBA8C;
+  transform: translateY(-1px);
 }
 
 /* Subtle Glow Effects */
@@ -284,32 +282,32 @@
   }
 }
 
-/* ── REVORA GradientButton System (Crisp, Premium, No Glow) ─────── */
+/* ── REVORA Solid Button System (Crisp, Premium Solid Peach) ─────── */
 .gradient-button {
   position: relative;
   z-index: 1;
   cursor: pointer;
-  color: #FFFDF9;
+  color: #17102F;
   font-family: var(--font-display);
-  background: linear-gradient(135deg, #7C3AED 0%, #FF6B6B 52%, #F97368 100%);
-  border: 1px solid rgba(255, 253, 249, 0.18);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.14);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, opacity 0.2s ease;
+  background: #FDBA8C;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, opacity 0.18s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 .gradient-button:hover {
-  background: linear-gradient(135deg, #8B5CF6 0%, #FF6B6B 48%, #FDBA8C 100%);
-  border-color: rgba(255, 253, 249, 0.32);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28), 0 1px 4px rgba(0, 0, 0, 0.16);
-  transform: translateY(-1.5px);
+  background: #F9A875;
+  color: #17102F;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .gradient-button:active {
   transform: translateY(0px) scale(0.99);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
 }
 
 .gradient-button:disabled,
@@ -324,29 +322,24 @@
   position: relative;
   z-index: 1;
   cursor: pointer;
-  background: rgba(24, 19, 45, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(139, 92, 246, 0.32);
-  color: #FFFDF9;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, opacity 0.2s ease;
+  background: transparent;
+  border: 1px solid #FDBA8C;
+  color: #FDBA8C;
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, opacity 0.18s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
 .gradient-button-variant:hover {
-  background: rgba(33, 24, 58, 0.96);
-  border-color: rgba(249, 115, 104, 0.5);
-  color: #FFFDF9;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-  transform: translateY(-1.5px);
+  background: rgba(253, 186, 140, 0.10);
+  border-color: #FDBA8C;
+  color: #FDBA8C;
+  transform: translateY(-1px);
 }
 
 .gradient-button-variant:active {
   transform: translateY(0px) scale(0.99);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .gradient-button-variant:disabled,

@@ -171,7 +171,7 @@ export const SymptomsStep: React.FC<SymptomsStepProps> = ({
                 <div className="w-full flex items-center justify-between">
                   <span
                     className={`text-xs sm:text-sm font-bold ${
-                      isSelected ? "text-[#FFFDF9] font-display" : "text-[#E9E2F5]"
+                      isSelected ? "text-[#17102F] font-display" : "text-[#E9E2F5]"
                     }`}
                   >
                     {sym.label}
@@ -179,14 +179,14 @@ export const SymptomsStep: React.FC<SymptomsStepProps> = ({
                   <div
                     className={`w-5 h-5 rounded-md flex items-center justify-center transition-all ${
                       isSelected
-                        ? "bg-[#F97368] text-[#FFFDF9]"
+                        ? "bg-[#17102F] text-[#FDBA8C]"
                         : "bg-[#21183A] border border-[#7C3AED]/30 group-hover:border-[#8B5CF6]"
                     }`}
                   >
                     {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                 </div>
-                <p className="text-[11px] text-[#B8AEC8] mt-2 leading-tight text-left">{sym.desc}</p>
+                <p className={`text-[11px] mt-2 leading-tight text-left ${isSelected ? "text-[#17102F]/80 font-medium" : "text-[#B8AEC8]"}`}>{sym.desc}</p>
               </GradientButton>
             );
           })}
