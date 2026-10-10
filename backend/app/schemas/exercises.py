@@ -9,6 +9,15 @@ RecommendationStatus = Literal[
     "withheld",
     "no_match",
 ]
+TriageLevel = Literal[
+    "standard_monitoring",
+    "prompt_medical_assessment",
+    "emergency",
+]
+ReviewStatus = Literal[
+    "approved",
+    "pending_review",
+]
 
 
 class DoctorGuidanceInput(BaseModel):
@@ -27,6 +36,10 @@ class DoctorGuidanceInput(BaseModel):
     medical_clearance_required: bool = Field(
         default=False,
         description="If True, all exercises are withheld until clinical clearance is obtained.",
+    )
+    clinician_clearance_granted: bool = Field(
+        default=False,
+        description="If True, indicates a qualified clinician has evaluated the athlete and approved conservative active recovery.",
     )
     max_allowed_intensity: MaxIntensity = Field(
         default="unrestricted",
@@ -74,7 +87,8 @@ class ExerciseAssessmentRequest(BaseModel):
 
 class RecoveryActivitySchema(BaseModel):
     """
-    Exact data contract conforming to frontend RecoveryActivity interface in recovery.ts.
+    Data contract conforming to frontend RecoveryActivity interface in recovery.ts,
+    enhanced with clinical verification auditing fields.
     """
     id: str
     name: str
@@ -88,6 +102,8 @@ class RecoveryActivitySchema(BaseModel):
     safetyNote: str | None = None
     videoThumbnailUrl: str | None = None
     verifiedSources: list[str] = Field(default_factory=list)
+    sourceUrls: list[str] = Field(default_factory=list)
+    reviewStatus: ReviewStatus = "approved"
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -99,6 +115,8 @@ class SafetyEvaluation(BaseModel):
     is_safe: bool = True
     withhold_recommendation: bool = False
     is_conservative: bool = False
+    triage_level: TriageLevel = "standard_monitoring"
+    identified_warning_signs: list[str] = Field(default_factory=list)
     withhold_reason: str | None = None
     warnings: list[str] = Field(default_factory=list)
     excluded_exercises: list[dict[str, str]] = Field(
@@ -112,6 +130,7 @@ class ExerciseRecommendationResponse(BaseModel):
     Core response contract for Module 3 recommendation engine.
     """
     status: RecommendationStatus
+    triage_level: TriageLevel = "standard_monitoring"
     activities: list[RecoveryActivitySchema] = Field(default_factory=list)
     safety_summary: str
     warnings: list[str] = Field(default_factory=list)

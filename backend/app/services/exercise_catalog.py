@@ -79,9 +79,12 @@ def load_catalog(force_reload: bool = False) -> list[dict[str, Any]]:
         return []
 
 
-def get_all_exercises() -> list[dict[str, Any]]:
-    """Return all catalog entries."""
-    return load_catalog()
+def get_all_exercises(approved_only: bool = False) -> list[dict[str, Any]]:
+    """Return catalog entries, optionally filtered by approved clinical review status."""
+    catalog = load_catalog()
+    if approved_only:
+        return [item for item in catalog if item.get("review_status") == "approved"]
+    return catalog
 
 
 def get_exercise_by_id(exercise_id: str) -> dict[str, Any] | None:
@@ -92,12 +95,18 @@ def get_exercise_by_id(exercise_id: str) -> dict[str, Any] | None:
     return None
 
 
-def get_exercises_for_body_area(body_area: str) -> list[dict[str, Any]]:
+def get_exercises_for_body_area(
+    body_area: str,
+    approved_only: bool = False,
+) -> list[dict[str, Any]]:
     """Return all exercises matching a given body area (target or secondary)."""
     norm = normalize_body_area(body_area)
     matches: list[dict[str, Any]] = []
 
     for item in load_catalog():
+        if approved_only and item.get("review_status") != "approved":
+            continue
+
         target = normalize_body_area(item.get("target_body_area", ""))
         secondaries = [
             normalize_body_area(sec)
@@ -109,16 +118,19 @@ def get_exercises_for_body_area(body_area: str) -> list[dict[str, Any]]:
     return matches
 
 
-def get_exercises_for_multiple_areas(body_areas: list[str]) -> list[dict[str, Any]]:
+def get_exercises_for_multiple_areas(
+    body_areas: list[str],
+    approved_only: bool = True,
+) -> list[dict[str, Any]]:
     """
     Return exercises for multiple anatomical areas without duplicates.
-    Preserves selection order based on primary body areas.
+    By default (approved_only=True), only clinically approved exercises are returned.
     """
     seen_ids: set[str] = set()
     result: list[dict[str, Any]] = []
 
     for area in body_areas:
-        area_exercises = get_exercises_for_body_area(area)
+        area_exercises = get_exercises_for_body_area(area, approved_only=approved_only)
         for ex in area_exercises:
             ex_id = ex.get("id", "")
             if ex_id and ex_id not in seen_ids:

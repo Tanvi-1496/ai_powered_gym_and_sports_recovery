@@ -32,18 +32,18 @@ def _format_activity(
     safety_note = "; ".join(precautions) if precautions else "Move slowly within pain-free threshold."
     if is_conservative:
         safety_note = (
-            f"[Conservative Mode: Pain {assessment.pain_severity}/10] Execute strictly unloaded; "
-            f"stop immediately if sharp discomfort occurs. {safety_note}"
+            f"[Clinician-Supervised Conservative Mode: VAS {assessment.pain_severity}/10] "
+            f"Execute strictly unloaded; stop immediately if discomfort intensifies. {safety_note}"
         )
 
     # Build description combining clinical purpose and instructions
     instructions_text = " ".join([f"{i+1}. {step}" for i, step in enumerate(ex.get("instructions", []))])
     full_desc = f"{ex.get('purpose', '')} Instructions: {instructions_text}"
 
-    # Sets and reps adjustment for conservative mode
+    # Deload volume during high pain under clinician clearance
     sets = ex.get("default_sets", 3)
     if is_conservative and sets > 2:
-        sets = 2  # Deload volume during high pain
+        sets = 2
 
     return RecoveryActivitySchema(
         id=ex.get("id", ""),
@@ -57,6 +57,8 @@ def _format_activity(
         difficulty=ex.get("difficulty", "gentle"),
         safetyNote=safety_note,
         verifiedSources=ex.get("verified_sources", []),
+        sourceUrls=ex.get("source_urls", []),
+        reviewStatus=ex.get("review_status", "approved"),
     )
 
 
@@ -68,12 +70,13 @@ def recommend_exercises(
     Core Python recommendation engine for Module 3.
     
     Triage Pipeline:
-    1. Evaluate safety (checks red-flags, doctor-guidance medical clearance, and severe pain).
-    2. If safety requires withholding, returns withheld response immediately with clinical explanation.
-    3. Queries catalog for single or multiple injury/soreness regions.
+    1. Evaluate safety: separates emergency signs from prompt-assessment signs,
+       withholds severe pain (>= 8/10) unless clinician clearance is explicitly granted.
+    2. If safety requires withholding, returns withheld response immediately with triage level.
+    3. Queries clinically approved catalog entries for targeted regions.
     4. Applies safety filters (doctor restriction codes, movement tags, intensity capping).
     5. Formats allowed exercises into RecoveryActivity objects.
-    6. Returns clean recommendation response.
+    6. Returns clean recommendation response with clinical disclaimer.
     """
     normalized_areas = [normalize_body_area(a) for a in assessment.body_areas]
 
@@ -83,6 +86,7 @@ def recommend_exercises(
     if safety_eval.withhold_recommendation:
         return ExerciseRecommendationResponse(
             status="withheld",
+            triage_level=safety_eval.triage_level,
             activities=[],
             safety_summary=safety_eval.withhold_reason or "Recommendations withheld for clinical safety.",
             warnings=safety_eval.warnings,
@@ -90,11 +94,11 @@ def recommend_exercises(
             excluded_count=0,
         )
 
-    # Step 2: Catalog querying
+    # Step 2: Catalog querying (approved entries only)
     if catalog_override is not None:
         candidates = catalog_override
     else:
-        candidates = get_exercises_for_multiple_areas(normalized_areas)
+        candidates = get_exercises_for_multiple_areas(normalized_areas, approved_only=True)
 
     # Step 3: Filter candidates through safety rules
     allowed_exercises, excluded_log = filter_candidate_exercises(
@@ -104,11 +108,12 @@ def recommend_exercises(
     )
 
     if not allowed_exercises:
-        summary_msg = "No suitable exercises found in catalog matching current assessment and safety filters."
+        summary_msg = "No suitable exercises found in catalog matching current assessment and safety restrictions."
         if excluded_log:
-            summary_msg += f" {len(excluded_log)} exercises were excluded due to restrictions."
+            summary_msg += f" {len(excluded_log)} exercises were excluded due to restrictions or review status."
         return ExerciseRecommendationResponse(
             status="no_match",
+            triage_level=safety_eval.triage_level,
             activities=[],
             safety_summary=summary_msg,
             warnings=safety_eval.warnings,
@@ -124,7 +129,6 @@ def recommend_exercises(
 
     selected: list[dict[str, Any]] = []
     for area, bucket in area_buckets.items():
-        # Prefer gentle / isometric exercises first
         sorted_bucket = sorted(
             bucket,
             key=lambda x: 0 if x.get("difficulty") == "gentle" else 1,
@@ -142,10 +146,11 @@ def recommend_exercises(
         f"Generated {len(activities)} personalized recovery activities covering {', '.join(normalized_areas)}."
     )
     if safety_eval.is_conservative:
-        summary_text += " Protocol is operating in conservative mode due to elevated pain rating."
+        summary_text += " Protocol operating under clinician-supervised conservative guidelines due to elevated pain."
 
     return ExerciseRecommendationResponse(
         status=status,
+        triage_level=safety_eval.triage_level,
         activities=activities,
         safety_summary=summary_text,
         warnings=safety_eval.warnings,

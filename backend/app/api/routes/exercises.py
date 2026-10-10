@@ -25,7 +25,7 @@ router = APIRouter()
     "/recommendations",
     response_model=ExerciseRecommendationResponse,
     summary="Generate personalized exercise recommendations",
-    description="Evaluates assessment data, enforces doctor-guidance restrictions, and returns tailored exercises.",
+    description="Evaluates assessment data, enforces doctor-guidance restrictions, audits clinical review status, and returns tailored exercises.",
 )
 def get_exercise_recommendations(
     payload: ExerciseAssessmentRequest,
@@ -50,7 +50,7 @@ def get_full_recovery_plan(
     "/safety-check",
     response_model=SafetyEvaluation,
     summary="Evaluate assessment safety",
-    description="Stand-alone triage check to determine if exercises are safe, withheld, or subject to conservative handling.",
+    description="Stand-alone triage check separating emergency signs from prompt-assessment indicators and checking guidance rules.",
 )
 def check_safety(
     payload: ExerciseAssessmentRequest,
@@ -62,17 +62,21 @@ def check_safety(
     "/catalog",
     response_model=list[dict[str, Any]],
     summary="Get exercise catalog",
-    description="Returns verified clinical exercise entries, optionally filtered by anatomical body area.",
+    description="Returns clinical exercise entries, optionally filtered by anatomical body area and review status.",
 )
 def list_catalog(
     body_area: str | None = Query(
         default=None,
         description="Filter catalog by anatomical region (e.g., 'knee', 'shoulder', 'lower_back').",
     ),
+    approved_only: bool = Query(
+        default=False,
+        description="If True, only returns entries with review_status 'approved'.",
+    ),
 ) -> list[dict[str, Any]]:
     if body_area:
-        return get_exercises_for_body_area(body_area)
-    return get_all_exercises()
+        return get_exercises_for_body_area(body_area, approved_only=approved_only)
+    return get_all_exercises(approved_only=approved_only)
 
 
 @router.get(
