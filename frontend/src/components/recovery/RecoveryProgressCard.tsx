@@ -1,14 +1,16 @@
 import React from "react";
-import { ListOrdered, TrendingUp } from "lucide-react";
+import { ListOrdered, TrendingUp, CheckCircle2 } from "lucide-react";
 
 interface RecoveryProgressCardProps {
   completedCount?: number;
   totalCount?: number;
+  activePhaseNumber?: number;
 }
 
 export const RecoveryProgressCard: React.FC<RecoveryProgressCardProps> = ({
   completedCount = 0,
   totalCount = 0,
+  activePhaseNumber = 1,
 }) => {
   const hasPlan = totalCount > 0;
   const progressPct = hasPlan ? Math.round((completedCount / totalCount) * 100) : 0;
@@ -23,22 +25,22 @@ export const RecoveryProgressCard: React.FC<RecoveryProgressCardProps> = ({
           </h3>
         </div>
         <span className="text-[11px] font-mono text-[#B8AEC8]">
-          {hasPlan ? `${completedCount} / ${totalCount} Done` : "Pending Generation"}
+          {hasPlan ? `${completedCount} / ${totalCount} Done` : "0 / 0 Completed"}
         </span>
       </div>
 
       <div className="space-y-3">
         <div className="flex items-baseline justify-between">
           <div>
-            <span className="text-2xl font-black font-mono text-[#FFFDF9]">
-              {hasPlan ? `${progressPct}%` : "--"}
+            <span className="text-2xl sm:text-3xl font-black font-mono text-[#FFFDF9]">
+              {progressPct}%
             </span>
             <span className="text-xs text-[#B8AEC8] block">Overall Completion</span>
           </div>
 
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-xs font-semibold text-[#E9E2F5]">
             <ListOrdered className="w-3.5 h-3.5 text-[#FDBA8C]" />
-            <span>{hasPlan ? `Phase 1 Active` : `Phase 1 of 4 Planned`}</span>
+            <span>Phase {activePhaseNumber} Active</span>
           </div>
         </div>
 
@@ -47,7 +49,7 @@ export const RecoveryProgressCard: React.FC<RecoveryProgressCardProps> = ({
           <div className="h-2 w-full bg-[#21183A] rounded-full overflow-hidden border border-[#7C3AED]/20">
             <div
               className="h-full bg-gradient-to-r from-[#7C3AED] via-[#F97368] to-[#10B981] transition-all duration-500 rounded-full"
-              style={{ width: `${hasPlan ? progressPct : 0}%` }}
+              style={{ width: `${progressPct}%` }}
             />
           </div>
           <div className="flex justify-between text-[9px] text-[#B8AEC8] font-mono">
@@ -58,10 +60,11 @@ export const RecoveryProgressCard: React.FC<RecoveryProgressCardProps> = ({
           </div>
         </div>
 
-        {!hasPlan && (
-          <p className="text-[11px] text-[#B8AEC8] leading-relaxed italic bg-[#120D26]/60 p-3 rounded-xl border border-[#7C3AED]/15">
-            Progress metrics and completion milestones will become active once your recovery plan is generated.
-          </p>
+        {completedCount > 0 && (
+          <div className="flex items-center gap-1.5 text-[11px] text-[#10B981] pt-1">
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>{completedCount} {completedCount === 1 ? "activity" : "activities"} completed in this roadmap</span>
+          </div>
         )}
       </div>
     </div>

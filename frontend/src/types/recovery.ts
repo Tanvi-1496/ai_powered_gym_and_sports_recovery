@@ -1,10 +1,9 @@
 // recovery.ts
-// Data contracts for Future REVORA Recovery & Rehabilitation Recommendation Engine.
-// Clean interface separation: AssessmentInput -> PredictionResult -> RecoveryPlan.
-// Phase 6 UI-first architecture: strictly no fake medical logic or hardcoded exercises.
+// Data contracts for REVORA Recovery & Rehabilitation Recommendation Engine.
+// Clean interface separation: AssessmentInput -> TelemetryCheckin -> RecoveryScore -> RecoveryPlan.
 
 import type { AssessmentData } from "@/services/assessment";
-import type { PredictionResult } from "./prediction";
+import type { PredictionResult, BiomechanicalRiskPrediction } from "./prediction";
 
 export type ActivityDifficulty = "gentle" | "moderate" | "advanced";
 
@@ -20,31 +19,40 @@ export interface RecoveryActivity {
   difficulty?: ActivityDifficulty;
   completed?: boolean;
   safetyNote?: string;
+  instructions?: string[] | string;
   videoThumbnailUrl?: string;
+  mediaUrl?: string;
 }
 
 export interface RecoveryPhase {
   id: string;
   phaseNumber: number;
   name: string;
-  status: "locked" | "current" | "completed" | "pending_generation";
-  duration?: string; // e.g., "Days 1-3"
+  title?: string;
+  subtitle?: string;
+  status: "active" | "locked" | "completed" | "pending_generation" | "current";
+  duration: string; // e.g., "Days 1-3" or "Week 1"
   summary?: string;
   activities: RecoveryActivity[];
 }
 
 export interface RecoveryPlan {
   id: string;
-  assessmentId?: string;
-  status: "pending_recommendation_engine" | "generating" | "active" | "completed";
+  userId?: string;
+  user_id?: string;
+  status: "active" | "ready" | "insufficient_data" | "pending_recommendation_engine" | "generating" | "completed" | string;
   currentPhaseNumber: number;
   totalPhases: number;
-  overallProgressPct: number | null; // null when no real plan is generated
-  estimatedDuration: string | null;
+  overallProgressPct: number;
+  estimatedDuration: string;
+  primarySport?: string;
   targetAreas: string[];
   phases: RecoveryPhase[];
   safetyGuidelines: string[];
+  recoveryScore?: number;
+  readinessTier?: string;
+  disclaimer: string;
   createdAt?: string;
-  sourcePrediction?: PredictionResult | null;
+  sourcePrediction?: PredictionResult | BiomechanicalRiskPrediction | null;
   sourceAssessment?: AssessmentData | null;
 }

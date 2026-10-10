@@ -40,34 +40,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return true;
     }
 
-    // 2. Query Supabase database 'profiles' table if available
-    try {
-      const { data: dbProfile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", currentUser.id)
-        .maybeSingle();
-
-      if (!error && dbProfile && dbProfile.primary_sport && dbProfile.activity_level) {
-        setProfile(dbProfile as AthleteProfileData);
-        setIsProfileComplete(true);
-        return true;
-      }
-    } catch (err) {
-      console.warn("Could not query profiles table:", err);
-    }
-
-    // 3. Fallback to localStorage session check
-    const localUserStr = localStorage.getItem("revora_user") || sessionStorage.getItem("revora_user");
-    if (localUserStr) {
+    // 2. Query Supabase database 'profiles' table if configured
+    if (isSupabaseConfigured) {
       try {
-        const parsed = JSON.parse(localUserStr);
-        if (parsed.isProfileComplete === true) {
+        const { data: dbProfile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+
+        if (!error && dbProfile && dbProfile.primary_sport && dbProfile.activity_level) {
+          setProfile(dbProfile as AthleteProfileData);
           setIsProfileComplete(true);
           return true;
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.warn("Could not query profiles table:", err);
       }
     }
 
@@ -84,7 +72,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Handle Supabase Auth Initialization & Subscription
   useEffect(() => {
+    // Clean up any stale local fake token from previous versions
+    const existingToken = localStorage.getItem("revora_token") || sessionStorage.getItem("revora_token");
+    if (existingToken?.startsWith("local-token-")) {
+      localStorage.removeItem("revora_token");
+      sessionStorage.removeItem("revora_token");
+      localStorage.removeItem("revora_user");
+      sessionStorage.removeItem("revora_user");
+    }
+
     if (!isSupabaseConfigured) {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      setIsProfileComplete(false);
       setIsLoading(false);
       return;
     }
@@ -102,34 +103,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (initialSession?.user) {
             setSession(initialSession);
             setUser(initialSession.user);
+            if (initialSession.access_token) {
+              localStorage.setItem("revora_token", initialSession.access_token);
+            }
             await checkProfileCompletion(initialSession.user);
           } else {
-            // Check localStorage for offline/local session
-            const localUserStr = localStorage.getItem("revora_user") || sessionStorage.getItem("revora_user");
-            if (localUserStr) {
-              try {
-                const parsed = JSON.parse(localUserStr);
-                const mockUser: User = {
-                  id: parsed.id || "local-athlete-1",
-                  app_metadata: {},
-                  user_metadata: { is_profile_complete: true, full_name: parsed.fullName || "Athlete" },
-                  aud: "authenticated",
-                  created_at: new Date().toISOString(),
-                } as User;
-                setUser(mockUser);
-                setIsProfileComplete(true);
-              } catch {
-                setSession(null);
-                setUser(null);
-                setProfile(null);
-                setIsProfileComplete(false);
-              }
-            } else {
-              setSession(null);
-              setUser(null);
-              setProfile(null);
-              setIsProfileComplete(false);
-            }
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+            setIsProfileComplete(false);
+            localStorage.removeItem("revora_token");
+            localStorage.removeItem("revora_user");
+            sessionStorage.removeItem("revora_token");
+            sessionStorage.removeItem("revora_user");
           }
         }
       } catch (err) {
@@ -145,14 +131,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Listen to Supabase auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      async (event, newSession) => {
         if (!isMounted) return;
 
         if (newSession?.user) {
           setSession(newSession);
           setUser(newSession.user);
+          if (newSession.access_token) {
+            localStorage.setItem("revora_token", newSession.access_token);
+          }
           await checkProfileCompletion(newSession.user);
-        } else {
+        } else if (event === "SIGNED_OUT" || !newSession) {
           setSession(null);
           setUser(null);
           setProfile(null);
@@ -177,7 +166,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signOut = async () => {
     setIsLoading(true);
     try {
-      await supabase.auth.signOut();
+      if (isSupabaseConfigured) {
+        await supabase.auth.signOut();
+      }
     } catch (err) {
       console.warn("Sign out error:", err);
     } finally {
