@@ -1,45 +1,86 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Activity,
   ArrowLeft,
   Calendar,
-  Cpu,
-  Edit3,
-  PlusCircle,
-  Printer,
+  ShieldCheck,
   Sparkles,
+  RefreshCw,
+  CheckCircle2,
+  Layers,
+  Compass,
+  Clock,
+  ChevronRight,
+  AlertCircle,
+  PlusCircle,
 } from "lucide-react";
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 import { GradientButton } from "@/components/ui/gradient-button";
+import { useAuth } from "@/context/AuthContext";
 import {
   getActiveAssessment,
   getLatestAssessment,
-  clearActiveAssessment,
   type AssessmentData,
 } from "@/services/assessment";
+import {
+  getPersonalizedRecoveryPlan,
+  getCompletedActivityIds,
+  saveCompletedActivityIds,
+  type RecoveryPlanResponse,
+  type RecoveryPhase,
+} from "@/services/recovery";
 import { getAnatomyLabel } from "@/data/anatomyManifest";
 import { ALL_BODY_REGIONS } from "@/features/assessment/BodyMapStep";
-import { RecoveryOverviewCard } from "@/components/recovery/RecoveryOverviewCard";
-import { RecoveryTimeline } from "@/components/recovery/RecoveryTimeline";
 import { RecoveryActivitiesList } from "@/components/recovery/RecoveryActivitiesList";
-import { RecoveryProgressCard } from "@/components/recovery/RecoveryProgressCard";
-import { RecoverySafetyCard } from "@/components/recovery/RecoverySafetyCard";
-import { RecoveryLoadingOverlay } from "@/components/recovery/RecoveryLoadingOverlay";
 
 export const RecoveryPlanPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // State management
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);
+  const [plan, setPlan] = useState<RecoveryPlanResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activePhase, setActivePhase] = useState<number>(1);
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [planError, setPlanError] = useState<string | null>(null);
+  const [activePhaseNumber, setActivePhaseNumber] = useState<number>(1);
   const [recordedAt, setRecordedAt] = useState<string>("");
+  const [completedActivityIds, setCompletedActivityIds] = useState<string[]>([]);
 
+  // Load saved completed activities from user-scoped storage
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      let current = getActiveAssessment();
+    if (user?.id) {
+      const saved = getCompletedActivityIds(user.id);
+      setCompletedActivityIds(saved);
+    }
+  }, [user?.id]);
 
+  // Fetch recovery plan from backend service
+  const fetchPlan = useCallback(async () => {
+    try {
+      setLoading(true);
+      setPlanError(null);
+      const data = await getPersonalizedRecoveryPlan();
+      setPlan(data);
+      if (data?.currentPhaseNumber) {
+        setActivePhaseNumber(data.currentPhaseNumber);
+      }
+    } catch (err: any) {
+      console.warn("[RecoveryPlanPage] Failed to fetch recovery plan:", err);
+      setPlanError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          "Unable to load recovery plan. Please verify your connection or try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial assessment and plan loading
+  useEffect(() => {
+    async function initData() {
+      let current = getActiveAssessment();
       if (!current) {
         const latest = await getLatestAssessment();
         if (latest) {
@@ -64,97 +105,155 @@ export const RecoveryPlanPage: React.FC = () => {
             year: "numeric",
             month: "short",
             day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
           })
         );
       }
 
       setAssessment(current);
-      setLoading(false);
+      await fetchPlan();
     }
 
-    loadData();
-  }, [recordedAt]);
+    initData();
+  }, [fetchPlan]);
 
-  const handleStartNewAssessment = () => {
-    clearActiveAssessment();
-    navigate("/assessment");
-  };
+  // Toggle activity completion and persist immediately per user
+  const handleToggleComplete = useCallback(
+    (activityId: string) => {
+      if (!user?.id) return;
+      setCompletedActivityIds((prev) => {
+        const updated = prev.includes(activityId)
+          ? prev.filter((id) => id !== activityId)
+          : [...prev, activityId];
+        saveCompletedActivityIds(user.id, updated);
+        return updated;
+      });
+    },
+    [user?.id]
+  );
 
-  const handlePrint = () => {
-    window.print();
-  };
+  // Derive flat list of all plan activities for overall progress
+  const allActivities = useMemo(() => {
+    if (!plan?.phases) return [];
+    return plan.phases.flatMap((p) => p.activities || []);
+  }, [plan?.phases]);
 
-  const formatDuration = (d?: string) => {
-    switch (d) {
-      case "<1_day": return "Less than 24 hours";
-      case "1-3_days": return "1 to 3 days";
-      case "4-7_days": return "4 to 7 days";
-      case "1-2_weeks": return "1 to 2 weeks";
-      case ">2_weeks": return "More than 2 weeks";
-      default: return d || "Not specified";
+  const totalActivitiesCount = allActivities.length;
+
+  const completedActivitiesCount = useMemo(() => {
+    if (totalActivitiesCount === 0) return 0;
+    const allIds = new Set(allActivities.map((a) => a.id));
+    return completedActivityIds.filter((id) => allIds.has(id)).length;
+  }, [allActivities, completedActivityIds, totalActivitiesCount]);
+
+  const completionPercentage = useMemo(() => {
+    if (totalActivitiesCount === 0) return 0;
+    return Math.min(100, Math.round((completedActivitiesCount / totalActivitiesCount) * 100));
+  }, [completedActivitiesCount, totalActivitiesCount]);
+
+  // Derive currently active phase object
+  const activePhaseData: RecoveryPhase | null = useMemo(() => {
+    if (!plan?.phases || plan.phases.length === 0) return null;
+    return (
+      plan.phases.find((p) => p.phaseNumber === activePhaseNumber) ||
+      plan.phases[0] ||
+      null
+    );
+  }, [plan?.phases, activePhaseNumber]);
+
+  // Activities for currently selected phase
+  const activePhaseActivities = useMemo(() => {
+    if (!activePhaseData?.activities) return [];
+    return activePhaseData.activities.map((act) => ({
+      ...act,
+      completed: completedActivityIds.includes(act.id),
+    }));
+  }, [activePhaseData, completedActivityIds]);
+
+  // Format body areas label cleanly from assessment / plan data
+  const formattedBodyAreas = useMemo(() => {
+    if (assessment?.body_areas && assessment.body_areas.length > 0) {
+      return assessment.body_areas
+        .map((areaId) => getAnatomyLabel(areaId) || ALL_BODY_REGIONS[areaId] || areaId)
+        .join(", ");
     }
-  };
-
-
-  const formatActivityName = () => {
-    if (!assessment) return "Not specified";
-    if (assessment.activity === "other" && assessment.custom_activity) {
-      return assessment.custom_activity;
+    if (plan?.targetAreas && plan.targetAreas.length > 0) {
+      return plan.targetAreas
+        .map((areaId) => getAnatomyLabel(areaId) || ALL_BODY_REGIONS[areaId] || areaId)
+        .join(", ");
     }
-    return assessment.activity
-      ? assessment.activity.charAt(0).toUpperCase() + assessment.activity.slice(1)
-      : "Not specified";
-  };
+    if (assessment?.activity) {
+      return assessment.custom_activity || assessment.activity;
+    }
+    return "Not specified";
+  }, [assessment, plan]);
 
+  // ── 1. LOADING STATE ────────────────────────────────────────────────────────
   if (loading) {
     return (
       <AuthenticatedLayout>
-        <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-          <div className="w-12 h-12 rounded-full border-4 border-[#7C3AED]/30 border-t-[#F97368] animate-spin" />
-          <p className="text-sm font-semibold text-[#B8AEC8]">Loading recovery plan context...</p>
+        <div className="max-w-4xl mx-auto space-y-6 animate-pulse py-6">
+          {/* Heading Skeleton */}
+          <div className="space-y-2">
+            <div className="h-4 w-36 bg-[#7C3AED]/20 rounded-full" />
+            <div className="h-9 w-64 bg-[#7C3AED]/30 rounded-xl" />
+            <div className="h-4 w-96 bg-[#7C3AED]/15 rounded" />
+          </div>
+
+          {/* Plan Overview Skeleton */}
+          <div className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 h-36" />
+
+          {/* Current Phase Banner Skeleton */}
+          <div className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 h-44" />
+
+          {/* Progress Card Skeleton */}
+          <div className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 h-28" />
+
+          {/* Exercises Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 h-48" />
+            <div className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 h-48" />
+          </div>
         </div>
       </AuthenticatedLayout>
     );
   }
 
-  // ── Empty / Missing Assessment Fallback ────────────────────────────────
-  if (!assessment) {
+  // ── 2. ERROR STATE ──────────────────────────────────────────────────────────
+  if (planError && !plan) {
     return (
       <AuthenticatedLayout>
         <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-6 animate-page-enter">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-[#18132D] border border-[#7C3AED]/30 flex items-center justify-center shadow-xl">
-            <Activity className="w-10 h-10 text-[#F97368]" />
+          <div className="w-16 h-16 mx-auto rounded-3xl bg-[#FF6B6B]/15 border border-[#FF6B6B]/30 flex items-center justify-center shadow-xl">
+            <AlertCircle className="w-8 h-8 text-[#FF6B6B]" />
           </div>
 
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-xs font-bold uppercase tracking-wider text-[#FDBA8C]">
-              <span>Assessment Required</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF6B6B]/15 border border-[#FF6B6B]/30 text-xs font-bold uppercase tracking-wider text-[#FF6B6B]">
+              <span>Request Error</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#FFFDF9] tracking-tight">
-              No Active Recovery Plan Found
+              Unable to Load Recovery Plan
             </h1>
             <p className="text-sm text-[#B8AEC8] max-w-md mx-auto leading-relaxed">
-              Please complete an assessment before accessing your recovery plan. Your activity, pain telemetry, and anatomical landmarks are required to build your roadmap.
+              {planError}
             </p>
           </div>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <GradientButton
               type="button"
-              onClick={() => navigate("/assessment")}
-              className="w-full sm:w-auto px-7 py-3.5 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
+              onClick={fetchPlan}
+              className="w-full sm:w-auto px-7 py-3 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Start New Assessment</span>
+              <RefreshCw className="w-4 h-4" />
+              <span>Retry Loading Plan</span>
             </GradientButton>
 
             <GradientButton
               type="button"
               variant="variant"
               onClick={() => navigate("/dashboard")}
-              className="w-full sm:w-auto px-6 py-3.5 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Return to Dashboard</span>
@@ -165,217 +264,342 @@ export const RecoveryPlanPage: React.FC = () => {
     );
   }
 
-  return (
-    <AuthenticatedLayout>
-      <div className="max-w-5xl mx-auto space-y-8 animate-page-enter pb-16">
-        
-        {/* ── Top Bar & Actions ────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <GradientButton
-              type="button"
-              variant="variant"
-              onClick={() => navigate("/results")}
-              className="min-w-0 px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#F97368]" />
-              <span>Assessment Results</span>
-            </GradientButton>
-
-            <span className="text-xs text-[#B8AEC8] font-mono flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-[#7C3AED]" />
-              <span>{recordedAt || "Recent Session"}</span>
-            </span>
+  // ── 3. NO RECOVERY PLAN AVAILABLE STATE ─────────────────────────────────────
+  if (!plan && !assessment) {
+    return (
+      <AuthenticatedLayout>
+        <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-6 animate-page-enter">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-[#18132D] border border-[#7C3AED]/30 flex items-center justify-center shadow-xl">
+            <Activity className="w-10 h-10 text-[#F97368]" />
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#18132D] border border-[#7C3AED]/25 text-xs font-semibold text-[#B8AEC8] hover:text-[#FFFDF9] hover:border-[#7C3AED]/50 transition-colors cursor-pointer"
-              title="Print recovery plan"
-            >
-              <Printer className="w-3.5 h-3.5 text-[#A78BFA]" />
-              <span>Print Plan</span>
-            </button>
-
-            <GradientButton
-              type="button"
-              variant="variant"
-              onClick={() => navigate("/assessment")}
-              className="min-w-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5 text-[#FDBA8C]" />
-              <span>Edit Assessment</span>
-            </GradientButton>
-
-            <GradientButton
-              type="button"
-              onClick={handleStartNewAssessment}
-              className="min-w-0 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>New Assessment</span>
-            </GradientButton>
-          </div>
-        </div>
-
-        {/* ── Page Header ─────────────────────────────────────────────── */}
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/40 text-xs font-bold uppercase tracking-wider text-[#FDBA8C]">
-            <Sparkles className="w-3.5 h-3.5 text-[#F97368]" />
-            <span>Recovery Roadmap</span>
-          </div>
-          <h1 className="text-3xl sm:text-4xl font-black font-display text-[#FFFDF9] tracking-tight">
-            Recovery Plan
-          </h1>
-          <p className="text-sm sm:text-base text-[#B8AEC8]">
-            Your recovery plan will appear here once the analysis engine is connected.
-          </p>
-        </div>
-
-        {/* ── 1. Recovery Overview Card ─────────────────────────────────── */}
-        <RecoveryOverviewCard assessment={assessment} />
-
-        {/* ── 2. Assessment Baseline Summary (Actual User Data) ─────────── */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 space-y-4 shadow-lg">
-          <div className="flex items-center justify-between pb-2 border-b border-[#7C3AED]/15">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#F97368]" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#FDBA8C] font-display">
-                Telemetry Baseline (Current Assessment)
-              </h3>
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-xs font-bold uppercase tracking-wider text-[#FDBA8C]">
+              <span>Plan Not Found</span>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/results")}
-              className="text-xs text-[#A78BFA] hover:text-[#FFFDF9] underline flex items-center gap-1 cursor-pointer"
-            >
-              <span>View Full Results</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div>
-              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Activity
-              </span>
-              <p className="text-sm font-bold text-[#FFFDF9] mt-0.5 truncate">
-                {formatActivityName()}
-              </p>
-            </div>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Pain Level
-              </span>
-              <p className="text-sm font-bold text-[#F97368] font-mono mt-0.5">
-                {assessment.pain_severity} / 10
-              </p>
-            </div>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Duration
-              </span>
-              <p className="text-xs sm:text-sm font-semibold text-[#E9E2F5] mt-0.5 truncate">
-                {formatDuration(assessment.duration)}
-              </p>
-            </div>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Movement Limitation
-              </span>
-              <p className="text-xs sm:text-sm font-semibold text-[#E9E2F5] mt-0.5 capitalize">
-                {assessment.movement_limitation === "yes"
-                  ? "Limited"
-                  : assessment.movement_limitation === "no"
-                  ? "None"
-                  : "Mild"}
-              </p>
-            </div>
-          </div>
-
-          {/* Affected Areas Badges */}
-          <div className="pt-2 border-t border-[#7C3AED]/15">
-            <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block mb-1.5">
-              Targeted Anatomical Areas ({assessment.body_areas.length})
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {(assessment.body_areas || []).map((areaId) => (
-                <span
-                  key={areaId}
-                  className="px-2.5 py-1 rounded-lg bg-[#21183A] border border-[#7C3AED]/30 text-xs font-semibold text-[#FFFDF9] flex items-center gap-1.5"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F97368]" />
-                  <span>{getAnatomyLabel(areaId) || ALL_BODY_REGIONS[areaId] || areaId}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── 3. Recovery Phase Timeline Stepper ────────────────────────── */}
-        <RecoveryTimeline
-          activePhase={activePhase}
-          onSelectPhase={(p) => setActivePhase(p)}
-        />
-
-        {/* ── 4. Main Activities & Side Progress Grid ───────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Main Activities Column (2 cols wide) */}
-          <div className="lg:col-span-2 space-y-6">
-            <RecoveryActivitiesList
-              phaseNumber={activePhase}
-              activities={[]}
-            />
-          </div>
-
-          {/* Sidebar / Progress & Safety (1 col wide) */}
-          <div className="space-y-6">
-            <RecoveryProgressCard
-              completedCount={0}
-              totalCount={0}
-            />
-
-            <RecoverySafetyCard />
-          </div>
-
-        </div>
-
-        {/* ── 5. Integration Roadmap Notice ────────────────────────────── */}
-        <div className="p-6 rounded-3xl bg-[#18132D]/90 border border-[#7C3AED]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#FDBA8C]">
-              <Cpu className="w-4 h-4 text-[#7C3AED]" />
-              <span>Future Integration Point</span>
-            </div>
-            <p className="text-xs text-[#B8AEC8] leading-relaxed max-w-xl">
-              When the REVORA Recommendation Engine is deployed, adaptive active recovery protocols, guided videos, and progressive reload sets will populate automatically into this interface.
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#FFFDF9] tracking-tight">
+              No Recovery Plan Available
+            </h1>
+            <p className="text-sm text-[#B8AEC8] max-w-md mx-auto leading-relaxed">
+              Complete an assessment or try loading your existing plan again.
             </p>
           </div>
+
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <GradientButton
+              type="button"
+              onClick={() => navigate("/assessment")}
+              className="w-full sm:w-auto px-7 py-3.5 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Start Assessment</span>
+            </GradientButton>
+
+            <GradientButton
+              type="button"
+              variant="variant"
+              onClick={fetchPlan}
+              className="w-full sm:w-auto px-6 py-3.5 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Retry Loading</span>
+            </GradientButton>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
+
+  // ── 4. RENDER REDESIGNED RECOVERY PLAN PAGE ─────────────────────────────────
+  return (
+    <AuthenticatedLayout>
+      <div className="max-w-4xl mx-auto space-y-8 animate-page-enter pb-16">
+
+        {/* ── SECTION 1 — PAGE HEADING ──────────────────────────────── */}
+        <section className="space-y-2" aria-labelledby="page-heading">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/40 text-xs font-bold uppercase tracking-wider text-[#FDBA8C]">
+              <Sparkles className="w-3.5 h-3.5 text-[#F97368]" />
+              <span>YOUR RECOVERY JOURNEY</span>
+            </div>
+
+            {/* Plan Status Badge (Only shown if data supports it) */}
+            {plan?.status && (
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border flex items-center gap-1.5 ${
+                  plan.status.toLowerCase() === "active" || plan.status.toLowerCase() === "ready"
+                    ? "bg-[#10B981]/15 border-[#10B981]/35 text-[#10B981]"
+                    : "bg-[#7C3AED]/15 border-[#7C3AED]/35 text-[#FDBA8C]"
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current" />
+                <span>{plan.status}</span>
+              </span>
+            )}
+          </div>
+
+          <h1
+            id="page-heading"
+            className="text-3xl sm:text-4xl font-black font-display text-[#FFFDF9] tracking-tight"
+          >
+            Your Recovery Plan
+          </h1>
+          <p className="text-sm sm:text-base text-[#B8AEC8]">
+            Track your recovery activities and monitor your progress.
+          </p>
+        </section>
+
+        {/* ── SECTION 2 — PLAN OVERVIEW CARD (FULL WIDTH) ───────────── */}
+        <section
+          className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 shadow-lg space-y-4"
+          aria-labelledby="plan-overview-heading"
+        >
+          <div className="flex items-center justify-between pb-3 border-b border-[#7C3AED]/15">
+            <div className="flex items-center gap-2.5">
+              <Layers className="w-4 h-4 text-[#F97368]" />
+              <h2
+                id="plan-overview-heading"
+                className="text-sm font-bold uppercase tracking-wider text-[#FDBA8C] font-display"
+              >
+                Plan Overview
+              </h2>
+            </div>
+            {recordedAt && (
+              <span className="text-xs text-[#B8AEC8] font-mono flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-[#7C3AED]" />
+                <span>{recordedAt}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {/* Assessed body area or concern */}
+            <div>
+              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
+                Assessed Body Area / Concern
+              </span>
+              <p className="text-sm font-bold text-[#FFFDF9] mt-0.5 truncate" title={formattedBodyAreas}>
+                {formattedBodyAreas}
+              </p>
+            </div>
+
+            {/* Current phase */}
+            <div>
+              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
+                Current Phase
+              </span>
+              <p className="text-sm font-bold text-[#FFFDF9] mt-0.5">
+                {plan?.currentPhaseNumber ? `Phase ${plan.currentPhaseNumber}` : "Phase 1"}
+              </p>
+            </div>
+
+            {/* Plan status */}
+            <div>
+              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
+                Plan Status
+              </span>
+              <p className="text-sm font-bold text-[#10B981] capitalize mt-0.5">
+                {plan?.status || "Active"}
+              </p>
+            </div>
+
+            {/* Total activities returned by backend */}
+            <div>
+              <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
+                Total Activities
+              </span>
+              <p className="text-sm font-bold text-[#FDBA8C] font-mono mt-0.5">
+                {totalActivitiesCount} {totalActivitiesCount === 1 ? "Activity" : "Activities"}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 3 — CURRENT PHASE BANNER ──────────────────────── */}
+        <section
+          className="p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-[#18132D] via-[#21183A] to-[#18132D] border-2 border-[#7C3AED]/35 shadow-xl space-y-4 relative overflow-hidden"
+          aria-labelledby="current-phase-heading"
+        >
+          {/* Decorative background glow */}
+          <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#7C3AED]/15 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#7C3AED]/25 border border-[#7C3AED]/40 text-xs font-bold font-mono uppercase tracking-widest text-[#FDBA8C]">
+              <Compass className="w-3.5 h-3.5 text-[#F97368]" />
+              <span>CURRENT PHASE</span>
+            </div>
+
+            {/* Phase duration / progress indicator if supplied */}
+            {activePhaseData?.duration && (
+              <div className="flex items-center gap-2 text-xs text-[#E9E2F5] font-mono">
+                <Clock className="w-3.5 h-3.5 text-[#A78BFA]" />
+                <span className="px-2.5 py-0.5 rounded-md bg-[#120D26]/70 border border-[#7C3AED]/25">
+                  {activePhaseData.duration}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {activePhaseData ? (
+            <div className="space-y-2">
+              {/* Strongest text element: Phase Title */}
+              <h2
+                id="current-phase-heading"
+                className="text-2xl sm:text-3xl font-black font-display text-[#FFFDF9] tracking-tight"
+              >
+                {activePhaseData.title || `Phase ${activePhaseData.phaseNumber}`}
+                {activePhaseData.subtitle ? ` — ${activePhaseData.subtitle}` : ""}
+              </h2>
+
+              {/* Phase description */}
+              <p className="text-sm sm:text-base text-[#B8AEC8] leading-relaxed max-w-2xl">
+                {activePhaseData.summary || activePhaseData.name || "Follow the prescribed exercises and monitor movement comfort."}
+              </p>
+            </div>
+          ) : (
+            <div className="py-2 text-sm text-[#B8AEC8]">
+              No current phase details available in the recovery plan.
+            </div>
+          )}
+
+          {/* Phase Switching Tabs (If multiple phases exist) */}
+          {plan?.phases && plan.phases.length > 1 && (
+            <div className="pt-3 border-t border-[#7C3AED]/20 flex items-center gap-2 overflow-x-auto pb-1">
+              {plan.phases.map((p) => {
+                const isSelected = p.phaseNumber === activePhaseNumber;
+                return (
+                  <button
+                    key={p.id || p.phaseNumber}
+                    type="button"
+                    onClick={() => setActivePhaseNumber(p.phaseNumber)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      isSelected
+                        ? "bg-[#F97368] text-[#120D26] shadow-md font-extrabold"
+                        : "bg-[#120D26]/80 text-[#B8AEC8] hover:text-[#FFFDF9] border border-[#7C3AED]/25 hover:border-[#7C3AED]/50"
+                    }`}
+                  >
+                    <span>{p.title || `Phase ${p.phaseNumber}`}</span>
+                    {isSelected && <ChevronRight className="w-3 h-3" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ── SECTION 4 — ACTIVITY PROGRESS CARD ────────────────────── */}
+        <section
+          className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 shadow-lg space-y-4"
+          aria-labelledby="activity-progress-heading"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+              <h2
+                id="activity-progress-heading"
+                className="text-sm font-bold uppercase tracking-wider text-[#FDBA8C] font-display"
+              >
+                Activity Progress
+              </h2>
+            </div>
+            <span className="text-xs font-mono font-bold text-[#FFFDF9]">
+              {completedActivitiesCount} / {totalActivitiesCount} Completed
+            </span>
+          </div>
+
+          {/* Horizontal Progress Bar */}
+          <div className="space-y-2">
+            <div className="w-full bg-[#21183A] rounded-full h-3.5 border border-[#7C3AED]/30 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#7C3AED] via-[#F97368] to-[#FDBA8C] rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${completionPercentage}%` }}
+                role="progressbar"
+                aria-valuenow={completionPercentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-[#B8AEC8]">
+              <span>Overall Plan Completion</span>
+              <span className="font-mono font-bold text-[#FDBA8C]">
+                {completionPercentage}%
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECTION 5 — YOUR RECOMMENDED EXERCISES ─────────────────── */}
+        <RecoveryActivitiesList
+          activities={activePhaseActivities}
+          onToggleComplete={handleToggleComplete}
+          isLoading={loading}
+          error={planError}
+          onRetry={fetchPlan}
+          title="Your Recommended Exercises"
+          description="Review your available exercises, follow the supplied instructions, and track your activity completion."
+        />
+
+        {/* ── SECTION 6 — SAFETY INFORMATION CARD (FULL WIDTH) ──────── */}
+        <section
+          className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 shadow-lg space-y-3"
+          aria-labelledby="safety-info-heading"
+        >
+          <div className="flex items-center gap-2 pb-2 border-b border-[#7C3AED]/15">
+            <ShieldCheck className="w-4 h-4 text-[#10B981]" />
+            <h2
+              id="safety-info-heading"
+              className="text-sm font-bold uppercase tracking-wider text-[#FDBA8C] font-display"
+            >
+              Safety Information
+            </h2>
+          </div>
+
+          {plan?.safetyGuidelines && plan.safetyGuidelines.length > 0 ? (
+            <ul className="space-y-2 text-xs sm:text-sm text-[#E9E2F5]/90 pl-1 leading-relaxed">
+              {plan.safetyGuidelines.map((guideline, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shrink-0 mt-1.5" />
+                  <span>{guideline}</span>
+                </li>
+              ))}
+            </ul>
+          ) : plan?.disclaimer ? (
+            <p className="text-xs sm:text-sm text-[#B8AEC8] leading-relaxed">
+              {plan.disclaimer}
+            </p>
+          ) : (
+            <p className="text-xs text-[#B8AEC8] italic">
+              No plan-specific safety notes are available.
+            </p>
+          )}
+        </section>
+
+        {/* ── SECTION 7 — BOTTOM NAVIGATION ACTIONS ─────────────────── */}
+        <section
+          className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#7C3AED]/20"
+          aria-label="Recovery navigation actions"
+        >
+          <GradientButton
+            type="button"
+            onClick={() => navigate("/results")}
+            className="w-full sm:w-auto px-7 py-3.5 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer order-1 sm:order-1"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Assessment Results</span>
+          </GradientButton>
 
           <GradientButton
             type="button"
             variant="variant"
-            onClick={() => setIsGenerating(true)}
-            className="min-w-0 px-4 py-2 text-xs font-bold shrink-0 cursor-pointer"
+            onClick={() => navigate("/dashboard")}
+            className="w-full sm:w-auto px-6 py-3.5 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer order-2 sm:order-2"
           >
-            <span>Preview Generation Flow</span>
+            <span>Return to Dashboard</span>
           </GradientButton>
-        </div>
+        </section>
 
       </div>
-
-      {/* ── Optional Generation Preview Transition ───────────────────── */}
-      {isGenerating && (
-        <RecoveryLoadingOverlay
-          onComplete={() => setIsGenerating(false)}
-          durationMs={1800}
-        />
-      )}
     </AuthenticatedLayout>
   );
 };

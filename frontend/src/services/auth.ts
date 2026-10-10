@@ -32,11 +32,12 @@ export interface RegisterResult {
 
 /**
  * Authenticate user with Email and Password using Supabase Auth.
+ * Real login succeeds only when Supabase returns a valid user and session.
  */
 export async function loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
   if (!isSupabaseConfigured) {
     throw new Error(
-      "Supabase credentials are required. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in frontend/.env.local."
+      "Supabase authentication is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY."
     );
   }
 
@@ -46,14 +47,21 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
   });
 
   if (error) {
+    const msg = error.message || "";
+    const isNetworkErr =
+      msg.includes("Failed to fetch") ||
+      msg.includes("fetch failed") ||
+      msg.includes("NetworkError");
+    if (isNetworkErr) {
+      throw new Error("Unable to reach authentication server. Please check your internet connection and try again.");
+    }
     throw error;
   }
 
-  if (!data.user || !data.session) {
-    throw new Error("Login failed. No session was returned by Supabase.");
+  if (!data?.user || !data?.session) {
+    throw new Error("Authentication failed: No active user session was returned.");
   }
 
-  // Check if profile is complete in metadata or database
   let isProfileComplete = data.user.user_metadata?.is_profile_complete === true;
 
   if (!isProfileComplete) {
@@ -68,7 +76,7 @@ export async function loginUser(credentials: LoginCredentials): Promise<AuthResp
         isProfileComplete = true;
       }
     } catch {
-      // ignore
+      // Ignore database inspection error
     }
   }
 
@@ -112,6 +120,14 @@ export async function registerUser(credentials: RegisterCredentials): Promise<Re
   });
 
   if (error) {
+    const msg = error.message || "";
+    const isNetworkErr =
+      msg.includes("Failed to fetch") ||
+      msg.includes("fetch failed") ||
+      msg.includes("NetworkError");
+    if (isNetworkErr) {
+      throw new Error("Unable to reach authentication server. Please check your network connection.");
+    }
     throw error;
   }
 
@@ -161,6 +177,9 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
  * Persist user authentication session based on rememberMe preference.
  */
 export function saveAuthSession(token: string, user: UserProfile, remember: boolean = false): void {
+  if (!token || token.startsWith("local-token-") || !user || user.id === "00000000-0000-0000-0000-000000000001") {
+    return;
+  }
   const storage = remember ? localStorage : sessionStorage;
   storage.setItem("revora_token", token);
   storage.setItem("revora_user", JSON.stringify(user));
@@ -170,10 +189,24 @@ export function saveAuthSession(token: string, user: UserProfile, remember: bool
  * Retrieve current active user profile from storage.
  */
 export function getStoredUser(): UserProfile | null {
+  const token = localStorage.getItem("revora_token") || sessionStorage.getItem("revora_token");
+  if (!token || token.startsWith("local-token-")) {
+    localStorage.removeItem("revora_token");
+    sessionStorage.removeItem("revora_token");
+    localStorage.removeItem("revora_user");
+    sessionStorage.removeItem("revora_user");
+    return null;
+  }
   const userStr = localStorage.getItem("revora_user") || sessionStorage.getItem("revora_user");
   if (!userStr) return null;
   try {
-    return JSON.parse(userStr) as UserProfile;
+    const parsed = JSON.parse(userStr) as UserProfile;
+    if (!parsed.id || parsed.id === "00000000-0000-0000-0000-000000000001") {
+      localStorage.removeItem("revora_user");
+      sessionStorage.removeItem("revora_user");
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }

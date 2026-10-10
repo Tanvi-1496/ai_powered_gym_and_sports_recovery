@@ -112,8 +112,10 @@ export const RecoveryTimeline: React.FC<RecoveryTimelineProps> = ({
                   {phase.subtitle}
                 </p>
                 <p className="text-[10px] text-[#B8AEC8]">
-                  {isSelected
-                    ? "Active View • Awaiting Engine"
+                  {phase.status === "completed"
+                    ? "Phase Completed"
+                    : isSelected
+                    ? "Current Active Phase"
                     : "Planned Progression"}
                 </p>
               </div>

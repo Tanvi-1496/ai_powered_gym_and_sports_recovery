@@ -10,17 +10,23 @@ import {
   Sparkles,
   AlertCircle,
   RefreshCw,
-  Dumbbell,
   HeartPulse,
   Flame,
   CheckCircle2,
   ChevronRight,
   Clock,
+  Moon,
+  Zap,
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 import type { AthleteProfileData } from "@/services/profile";
+import {
+  getRecoveryCheckins,
+  type RecoveryCheckin,
+} from "@/services/recovery";
+import { RecoveryForm } from "@/components/RecoveryForm";
 import { GradientButton } from "@/components/ui/gradient-button";
 
 export const DashboardPage: React.FC = () => {
@@ -31,6 +37,21 @@ export const DashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
+  const [checkins, setCheckins] = useState<RecoveryCheckin[]>([]);
+  const [loadingCheckins, setLoadingCheckins] = useState<boolean>(false);
+
+  // Fetch checkins from backend
+  const fetchCheckins = useCallback(async () => {
+    try {
+      setLoadingCheckins(true);
+      const data = await getRecoveryCheckins();
+      setCheckins(data);
+    } catch (err) {
+      console.warn("[Dashboard] Could not fetch recovery checkins:", err);
+    } finally {
+      setLoadingCheckins(false);
+    }
+  }, []);
 
   // Fetch real profile from Supabase PostgreSQL
   const fetchDashboardData = useCallback(async () => {
@@ -91,7 +112,8 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+    fetchCheckins();
+  }, [fetchDashboardData, fetchCheckins]);
 
   // Sync with context profile if updated
   useEffect(() => {
@@ -105,6 +127,11 @@ export const DashboardPage: React.FC = () => {
     setIsLoading(true);
     refreshProfile();
     fetchDashboardData();
+    fetchCheckins();
+  };
+
+  const handleCheckinSaved = (newCheckin: RecoveryCheckin) => {
+    setCheckins((prev) => [newCheckin, ...prev.filter((c) => c.id !== newCheckin.id)]);
   };
 
   // Derive First Name from full name
@@ -201,11 +228,19 @@ export const DashboardPage: React.FC = () => {
             </p>
 
             <p className="mt-1 text-xs sm:text-sm text-[#B8AEC8] max-w-2xl">
-              Track your recovery journey, understand your symptoms, and make informed decisions about your training.
+              Track your daily recovery metrics, understand your physiological readiness, and optimize training load.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <a
+              href="#daily-recovery-checkin"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#21183A]/90 hover:bg-[#7C3AED]/30 border border-[#7C3AED]/40 text-xs sm:text-sm font-bold text-[#FDBA8C] hover:text-[#FFFDF9] transition-all shadow-md"
+            >
+              <HeartPulse className="w-4 h-4 text-[#F97368]" />
+              <span>Daily Check-in</span>
+            </a>
+
             <GradientButton asChild className="min-w-0 px-5 py-2.5 text-xs sm:text-sm font-bold">
               <Link to="/assessment">
                 <Activity className="w-4 h-4 mr-2" />
@@ -217,7 +252,7 @@ export const DashboardPage: React.FC = () => {
 
         {/* ── Main Dashboard Cards Grid ────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* ── 5. Primary CTA Card (Hero Assessment Banner) ───────────── */}
           <div className="lg:col-span-8 rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#1E1538]/85 via-[#18132D]/80 to-[#120D26]/85 backdrop-blur-md border border-[#8B5CF6]/35 shadow-2xl relative overflow-hidden flex flex-col justify-between group">
             {/* Ambient Background Glows */}
@@ -350,97 +385,146 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* ── 7. Recent Assessment Section (Clean Empty State) ───────── */}
-          <div className="lg:col-span-6 rounded-3xl p-6 sm:p-7 bg-[#18132D]/80 backdrop-blur-md border border-[#7C3AED]/25 shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#7C3AED]/15">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center text-[#F97368]">
-                    <Activity className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-base font-bold text-[#FFFDF9] font-display">
-                    Recent Assessment
-                  </h3>
-                </div>
-
-                <Link
-                  to="/history"
-                  className="text-xs font-semibold text-[#A78BFA] hover:text-[#F97368] transition-colors"
-                >
-                  View All
-                </Link>
-              </div>
-
-              {/* Clean Empty State (No Fabricated Data) */}
-              <div className="py-8 text-center flex flex-col items-center justify-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#21183A]/70 border border-[#7C3AED]/20 flex items-center justify-center text-[#A78BFA]">
-                  <Clock className="w-6 h-6" />
-                </div>
-                <div className="space-y-1 max-w-sm">
-                  <h4 className="text-sm font-bold text-[#FFFDF9]">No assessments yet</h4>
-                  <p className="text-xs text-[#B8AEC8] leading-relaxed">
-                    Start your first assessment to understand your current symptoms and recovery needs.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#7C3AED]/15">
-              <GradientButton
-                asChild
-                className="w-full min-w-0 py-2.5 px-4 font-bold text-xs"
-              >
-                <Link to="/assessment">
-                  <span>Start Assessment</span>
-                  <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                </Link>
-              </GradientButton>
-            </div>
+          {/* ── 7. Daily Recovery Check-in Form ────────────────────────── */}
+          <div className="lg:col-span-7">
+            <RecoveryForm onSaved={handleCheckinSaved} />
           </div>
 
-          {/* ── 8. Recovery Overview Section (Clean Empty State) ────────── */}
-          <div className="lg:col-span-6 rounded-3xl p-6 sm:p-7 bg-[#18132D]/80 backdrop-blur-md border border-[#7C3AED]/25 shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-[#7C3AED]/15">
+          {/* ── 8. Recent Recovery Check-in Telemetry ─────────────────── */}
+          <div className="lg:col-span-5 rounded-3xl p-6 sm:p-7 bg-[#18132D]/80 backdrop-blur-md border border-[#7C3AED]/25 shadow-xl flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3.5 border-b border-[#7C3AED]/15">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center text-[#FDBA8C]">
-                    <HeartPulse className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center text-[#10B981]">
+                    <Activity className="w-4 h-4" />
                   </div>
-                  <h3 className="text-base font-bold text-[#FFFDF9] font-display">
-                    Recovery Overview
-                  </h3>
+                  <div>
+                    <h3 className="text-base font-bold text-[#FFFDF9] font-display">
+                      Recent Check-ins
+                    </h3>
+                    <p className="text-[11px] text-[#B8AEC8]">Historical Daily Metrics</p>
+                  </div>
                 </div>
 
-                <Link
-                  to="/recovery"
-                  className="text-xs font-semibold text-[#A78BFA] hover:text-[#F97368] transition-colors"
-                >
-                  Protocols
-                </Link>
+                <span className="text-xs font-mono text-[#FDBA8C] font-bold px-2 py-0.5 rounded-lg bg-[#7C3AED]/20 border border-[#7C3AED]/30">
+                  {checkins.length} {checkins.length === 1 ? "entry" : "entries"}
+                </span>
               </div>
 
-              {/* Clean Empty State (No Fabricated Stats) */}
-              <div className="py-8 text-center flex flex-col items-center justify-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#21183A]/70 border border-[#7C3AED]/20 flex items-center justify-center text-[#F97368]">
-                  <Dumbbell className="w-6 h-6" />
+              {/* Checkin List or Empty State */}
+              {loadingCheckins ? (
+                <div className="py-8 flex flex-col items-center justify-center space-y-2">
+                  <div className="w-8 h-8 rounded-full border-2 border-[#7C3AED]/30 border-t-[#F97368] animate-spin" />
+                  <p className="text-xs text-[#B8AEC8]">Loading recovery telemetry...</p>
                 </div>
-                <div className="space-y-1 max-w-sm">
-                  <h4 className="text-sm font-bold text-[#FFFDF9]">Your recovery journey starts here.</h4>
-                  <p className="text-xs text-[#B8AEC8] leading-relaxed">
-                    Complete an assessment to receive personalized recovery guidance.
-                  </p>
+              ) : checkins.length === 0 ? (
+                <div className="py-8 text-center flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#21183A]/70 border border-[#7C3AED]/20 flex items-center justify-center text-[#F97368]">
+                    <HeartPulse className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1 max-w-xs">
+                    <h4 className="text-sm font-bold text-[#FFFDF9]">No check-ins yet today</h4>
+                    <p className="text-xs text-[#B8AEC8] leading-relaxed">
+                      Use the check-in form on the left to record your daily sleep, heart rate, and soreness.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+                  {checkins.slice(0, 5).map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3.5 rounded-2xl bg-[#120D26]/80 border border-[#7C3AED]/20 space-y-2.5 transition-all hover:border-[#7C3AED]/40"
+                    >
+                      <div className="flex items-center justify-between text-[11px] text-[#B8AEC8]">
+                        <span className="font-mono text-[#E9E2F5] flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-[#A78BFA]" />
+                          {new Date(item.created_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded-md border border-[#10B981]/25">
+                          Verified
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        <div className="p-2 rounded-xl bg-[#21183A]/60 border border-[#7C3AED]/15">
+                          <div className="flex items-center justify-center gap-1 text-[10px] text-[#B8AEC8]">
+                            <Moon className="w-3 h-3 text-[#A78BFA]" />
+                            <span>Sleep</span>
+                          </div>
+                          <p className="text-xs font-bold text-[#FFFDF9] mt-0.5">
+                            {item.sleep_hours}h
+                          </p>
+                        </div>
+
+                        <div className="p-2 rounded-xl bg-[#21183A]/60 border border-[#7C3AED]/15">
+                          <div className="flex items-center justify-center gap-1 text-[10px] text-[#B8AEC8]">
+                            <HeartPulse className="w-3 h-3 text-[#F97368]" />
+                            <span>Pulse</span>
+                          </div>
+                          <p className="text-xs font-bold text-[#FFFDF9] mt-0.5">
+                            {item.resting_heart_rate} bpm
+                          </p>
+                        </div>
+
+                        <div className="p-2 rounded-xl bg-[#21183A]/60 border border-[#7C3AED]/15">
+                          <div className="flex items-center justify-center gap-1 text-[10px] text-[#B8AEC8]">
+                            <Flame className="w-3 h-3 text-[#F97368]" />
+                            <span>Soreness</span>
+                          </div>
+                          <p className="text-xs font-bold text-[#F97368] mt-0.5">
+                            {item.soreness}/10
+                          </p>
+                        </div>
+
+                        <div className="p-2 rounded-xl bg-[#21183A]/60 border border-[#7C3AED]/15">
+                          <div className="flex items-center justify-center gap-1 text-[10px] text-[#B8AEC8]">
+                            <Zap className="w-3 h-3 text-[#10B981]" />
+                            <span>Energy</span>
+                          </div>
+                          <p className="text-xs font-bold text-[#10B981] mt-0.5">
+                            {item.energy_level}/10
+                          </p>
+                        </div>
+                      </div>
+
+                      {item.prediction && (
+                        <div className="flex items-center justify-between pt-1.5 border-t border-[#7C3AED]/15 text-[11px]">
+                          <span className="text-[#B8AEC8] flex items-center gap-1.5">
+                            <Sparkles className="w-3 h-3 text-[#F97368]" />
+                            <span>ML Recovery Score:</span>
+                            <strong className="text-[#FFFDF9] font-mono">{item.prediction.score} / 100</strong>
+                          </span>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${
+                            item.prediction.tier === "optimal"
+                              ? "bg-[#10B981]/15 text-[#10B981]"
+                              : item.prediction.tier === "moderate"
+                              ? "bg-[#F59E0B]/15 text-[#FDBA8C]"
+                              : "bg-[#F97368]/15 text-[#F97368]"
+                          }`}>
+                            {item.prediction.tier}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="pt-4 border-t border-[#7C3AED]/15">
+            <div className="pt-4 mt-4 border-t border-[#7C3AED]/15">
               <GradientButton
                 variant="variant"
                 asChild
                 className="w-full min-w-0 py-2.5 px-4 font-bold text-xs"
               >
-                <Link to="/assessment">
-                  <span>Begin Assessment</span>
+                <Link to="/recovery">
+                  <span>View Recovery Plan</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-2 text-[#F97368]" />
                 </Link>
               </GradientButton>
@@ -453,46 +537,65 @@ export const DashboardPage: React.FC = () => {
               Quick Actions
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Action 1: Start New Assessment */}
-              <Link
-                to="/assessment"
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Action 1: Daily Recovery Check-in */}
+              <a
+                href="#daily-recovery-checkin"
                 className="p-4 rounded-2xl bg-[#18132D]/80 hover:bg-[#21183A]/90 backdrop-blur-md border border-[#7C3AED]/20 hover:border-[#F97368]/40 transition-all duration-200 group shadow-md flex items-center justify-between"
               >
                 <div className="flex items-center gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center text-[#F97368] group-hover:scale-105 transition-transform">
-                    <Activity className="w-5 h-5" />
+                    <HeartPulse className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#FFFDF9] group-hover:text-[#FDBA8C] transition-colors">
-                      Start New Assessment
+                      Daily Check-in
                     </h4>
-                    <p className="text-[11px] text-[#B8AEC8]">Check symptoms & triage risk</p>
+                    <p className="text-[11px] text-[#B8AEC8]">Log sleep, HR & readiness</p>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#B8AEC8]/40 group-hover:text-[#F97368] group-hover:translate-x-1 transition-all" />
-              </Link>
+              </a>
 
-              {/* Action 2: Recovery History */}
+              {/* Action 2: Start New Assessment */}
               <Link
-                to="/history"
+                to="/assessment"
                 className="p-4 rounded-2xl bg-[#18132D]/80 hover:bg-[#21183A]/90 backdrop-blur-md border border-[#7C3AED]/20 hover:border-[#8B5CF6]/40 transition-all duration-200 group shadow-md flex items-center justify-between"
               >
                 <div className="flex items-center gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center text-[#A78BFA] group-hover:scale-105 transition-transform">
-                    <History className="w-5 h-5" />
+                    <Activity className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#FFFDF9] group-hover:text-[#FFFDF9] transition-colors">
-                      Recovery History
+                      New Assessment
                     </h4>
-                    <p className="text-[11px] text-[#B8AEC8]">View past assessments</p>
+                    <p className="text-[11px] text-[#B8AEC8]">Symptom & risk check</p>
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#B8AEC8]/40 group-hover:text-[#A78BFA] group-hover:translate-x-1 transition-all" />
               </Link>
 
-              {/* Action 3: Profile & Settings */}
+              {/* Action 3: Recovery Plan & History */}
+              <Link
+                to="/recovery"
+                className="p-4 rounded-2xl bg-[#18132D]/80 hover:bg-[#21183A]/90 backdrop-blur-md border border-[#7C3AED]/20 hover:border-[#8B5CF6]/40 transition-all duration-200 group shadow-md flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center text-[#10B981] group-hover:scale-105 transition-transform">
+                    <History className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-[#FFFDF9] group-hover:text-[#FFFDF9] transition-colors">
+                      Recovery Plan
+                    </h4>
+                    <p className="text-[11px] text-[#B8AEC8]">Protocols & history</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-[#B8AEC8]/40 group-hover:text-[#10B981] group-hover:translate-x-1 transition-all" />
+              </Link>
+
+              {/* Action 4: Profile & Settings */}
               <Link
                 to="/settings"
                 className="p-4 rounded-2xl bg-[#18132D]/80 hover:bg-[#21183A]/90 backdrop-blur-md border border-[#7C3AED]/20 hover:border-[#8B5CF6]/40 transition-all duration-200 group shadow-md flex items-center justify-between"
@@ -503,7 +606,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-[#FFFDF9] group-hover:text-[#FFFDF9] transition-colors">
-                      Profile & Settings
+                      Profile Settings
                     </h4>
                     <p className="text-[11px] text-[#B8AEC8]">Manage athlete details</p>
                   </div>
