@@ -1,0 +1,630 @@
+[
+  {
+    "id": "knee-spanish-squat-iso",
+    "name": "Spanish Squat Isometric Hold",
+    "target_body_area": "knee",
+    "secondary_areas": ["quadriceps"],
+    "purpose": "Patellar tendon analgesia and quadriceps isometric recruitment with reduced patellofemoral joint shear.",
+    "instructions": [
+      "Secure a rigid or heavy resistance band around an anchor and behind both knees immediately below the joint line.",
+      "Step back until firm forward tension is felt against the proximal shins.",
+      "Maintain a vertical shin angle and descend into roughly 70-80 degrees of knee flexion.",
+      "Hold the isometric position without allowing knees to drift forward over toes.",
+      "Breathe rhythmically throughout the hold, then smoothly rise to standing."
+    ],
+    "difficulty": "gentle",
+    "equipment": "resistance_band",
+    "movement_tags": ["knee_isometric", "patellar_loading", "closed_chain"],
+    "contraindications": ["acute_patellar_fracture", "active_severe_effusion"],
+    "precautions": [
+      "Keep shins as vertical as possible to minimize patellofemoral compressive reaction force.",
+      "Do not push into sharp pinching pain; terminate if discomfort exceeds 3/10."
+    ],
+    "verified_sources": [
+      "Rio E, Kidgell D, Purdam C, et al. Isometric exercise induces analgesia and reduces inhibition in patellar tendinopathy. Br J Sports Med. 2015;49(19):1277-1283."
+    ],
+    "source_urls": [
+      "https://bjsm.bmj.com/content/49/19/1277"
+    ],
+    "review_status": "approved",
+    "review_notes": "Clinically established isometric protocol for patellar tendon load management.",
+    "default_sets": 4,
+    "default_reps": null,
+    "default_duration": "45s hold",
+    "frequency": "Daily or pre-load preparation"
+  },
+  {
+    "id": "knee-straight-leg-raise",
+    "name": "Supine Straight Leg Raise",
+    "target_body_area": "knee",
+    "secondary_areas": ["hip", "quadriceps"],
+    "purpose": "Quadriceps activation and anterior kinetic chain control without patellofemoral compressive contact pressure.",
+    "instructions": [
+      "Lie supine on a firm surface with the unaffected knee flexed and foot flat on the floor.",
+      "Fully extend the involved knee, dorsiflex ankle, and contract quadriceps firmly.",
+      "Slowly raise the straight leg to the level of the contralateral flexed knee (approx. 45 degrees).",
+      "Pause for 2 seconds at peak elevation maintaining knee lock.",
+      "Lower under control over 2-3 seconds."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["quadriceps_activation", "open_chain", "non_compressive", "gentle_mobility"],
+    "contraindications": ["acute_hip_flexor_avulsion", "acute_lumbar_radiculopathy_provocation"],
+    "precautions": [
+      "Keep lumbar spine neutral against the mat without compensatory arching.",
+      "Maintain active quadriceps lockout throughout the ascent and descent."
+    ],
+    "verified_sources": [
+      "American Academy of Orthopaedic Surgeons (AAOS). Patellofemoral Pain Syndrome Rehabilitation Exercises."
+    ],
+    "source_urls": [
+      "https://orthoinfo.aaos.org/en/recovery/patellofemoral-pain-syndrome-rehabilitation-exercises/"
+    ],
+    "review_status": "approved",
+    "review_notes": "Standard non-compressive quadriceps re-education exercise from AAOS guidelines.",
+    "default_sets": 3,
+    "default_reps": 12,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "knee-terminal-knee-extension",
+    "name": "Terminal Knee Extension (TKE) with Band",
+    "target_body_area": "knee",
+    "secondary_areas": ["vastus_medialis"],
+    "purpose": "Vastus medialis oblique (VMO) recruitment through terminal 0-30 degrees of knee extension.",
+    "instructions": [
+      "Anchor a loop resistance band at knee height.",
+      "Step into the loop with the band positioned behind the popliteal crease.",
+      "Press the knee back into terminal extension against band resistance.",
+      "Hold peak contraction for 2 seconds, then return smoothly."
+    ],
+    "difficulty": "gentle",
+    "equipment": "resistance_band",
+    "movement_tags": ["knee_extension", "vmo_activation", "closed_chain"],
+    "contraindications": ["hyperextension_instability", "acute_posterior_cruciate_injury"],
+    "precautions": [
+      "Do not forcefully snap the knee into hyperextension."
+    ],
+    "verified_sources": [
+      "National Strength and Conditioning Association (NSCA) Corrective Exercise Review"
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Awaiting dosage validation and institutional clinical review for patellofemoral sub-cohorts.",
+    "default_sets": 3,
+    "default_reps": 15,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "knee-wall-slide-squat",
+    "name": "Wall Slide Partial Squat",
+    "target_body_area": "knee",
+    "secondary_areas": ["quadriceps", "glutes"],
+    "purpose": "Closed-chain quadriceps loading through shallow range of motion.",
+    "instructions": [
+      "Stand with back flat against a wall, feet shoulder-width and 18 inches forward.",
+      "Slide down until knees reach no more than 45-60 degrees flexion.",
+      "Hold for 3 seconds, then slide back up."
+    ],
+    "difficulty": "moderate",
+    "equipment": "bodyweight",
+    "movement_tags": ["quadriceps_loading", "partial_flexion", "closed_chain"],
+    "contraindications": ["acute_patellar_dislocation", "severe_chondromalacia_flare"],
+    "precautions": [
+      "Do not slide past 60 degrees during early recovery."
+    ],
+    "verified_sources": [
+      "ACSM Exercise Testing and Prescription Guidelines"
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending institutional clinical review regarding patellofemoral shear loads.",
+    "default_sets": 3,
+    "default_reps": 10,
+    "default_duration": null,
+    "frequency": "3x weekly"
+  },
+  {
+    "id": "shoulder-prone-ytw",
+    "name": "Prone Y-T-W Scapular Raises",
+    "target_body_area": "shoulder",
+    "secondary_areas": ["upper_back", "scapula"],
+    "purpose": "Lower trapezius, middle trapezius, and serratus activation for scapular dyskinesis recovery.",
+    "instructions": [
+      "Lie prone on a mat with forehead supported and neck in neutral alignment.",
+      "Y position: Raise arms at 45 degrees thumbs up; squeeze lower shoulder blades for 2 seconds.",
+      "T position: Extend arms straight out to sides, retracting mid-scapulae for 2 seconds.",
+      "W position: Flex elbows to 90 degrees, externally rotating and depressing scapulae for 2 seconds.",
+      "Lower smoothly with controlled tempo between shapes."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["scapular_stabilization", "rotator_cuff_activation", "posterior_chain"],
+    "contraindications": ["acute_acromioclavicular_separation", "cervical_radiculopathy_flare"],
+    "precautions": [
+      "Avoid upper trapezius shrugging; initiate all movement from lower/mid scapular retraction.",
+      "Bodyweight only during early recovery."
+    ],
+    "verified_sources": [
+      "Kibler WB, Ludewig PM, McClure PW, et al. Clinical implications of scapular dyskinesis in shoulder injury: the 2013 consensus statement. Br J Sports Med. 2013;47(14):877-885."
+    ],
+    "source_urls": [
+      "https://bjsm.bmj.com/content/47/14/877"
+    ],
+    "review_status": "approved",
+    "review_notes": "Consensus-backed scapular dyskinesis rehabilitation protocol.",
+    "default_sets": 3,
+    "default_reps": 8,
+    "default_duration": null,
+    "frequency": "Daily or pre-workout"
+  },
+  {
+    "id": "shoulder-side-external-rotation",
+    "name": "Side-Lying Dumbbell External Rotation",
+    "target_body_area": "shoulder",
+    "secondary_areas": ["infraspinatus", "teres_minor"],
+    "purpose": "Infraspinatus and teres minor strengthening to stabilize the humeral head against anterior migration.",
+    "instructions": [
+      "Lie on the unaffected side with a folded towel roll placed between involved elbow and ribcage.",
+      "Flex involved elbow to 90 degrees.",
+      "Holding a 1-2 kg dumbbell, rotate forearm upward toward ceiling.",
+      "Pause for 1 second at apex without rolling torso backward.",
+      "Lower slowly over 3 seconds to starting horizontal position."
+    ],
+    "difficulty": "gentle",
+    "equipment": "light_dumbbell",
+    "movement_tags": ["rotator_cuff_activation", "external_rotation", "eccentric_control"],
+    "contraindications": ["acute_posterior_dislocation", "complete_infraspinatus_tendon_rupture"],
+    "precautions": [
+      "Keep elbow pinned firmly to the towel roll; avoid shoulder abduction.",
+      "Stop before fatigue compromises movement mechanics."
+    ],
+    "verified_sources": [
+      "Reinold MM, Wilk KE, Fleisig GS, et al. Electromyographic analysis of the rotator cuff and deltoid musculature during common shoulder rehabilitation exercises. J Orthop Sports Phys Ther. 2004;34(7):385-394."
+    ],
+    "source_urls": [
+      "https://www.jospt.org/doi/10.2519/jospt.2004.34.7.385"
+    ],
+    "review_status": "approved",
+    "review_notes": "High EMG specificity for infraspinatus with minimal deltoid co-contraction.",
+    "default_sets": 3,
+    "default_reps": 12,
+    "default_duration": null,
+    "frequency": "3x weekly"
+  },
+  {
+    "id": "shoulder-scapular-wall-slide",
+    "name": "Forearm Scapular Wall Slide",
+    "target_body_area": "shoulder",
+    "secondary_areas": ["serratus_anterior"],
+    "purpose": "Upward scapular rotation and serratus anterior recruitment.",
+    "instructions": [
+      "Stand facing a wall with forearms resting vertically against it.",
+      "Slide forearms upward along the wall into a shallow 'V' shape.",
+      "Return slowly to start."
+    ],
+    "difficulty": "gentle",
+    "equipment": "wall",
+    "movement_tags": ["serratus_activation", "overhead_mobility", "gentle_mobility"],
+    "contraindications": ["severe_subacromial_impingement_flare"],
+    "precautions": [
+      "Cease upward slide prior to anterior pinching."
+    ],
+    "verified_sources": [
+      "Cools AM, et al. Scapular muscle recruitment during rehabilitation exercises. Am J Sports Med. 2007."
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Requires impingement sub-cohort clearance before automated recommendation.",
+    "default_sets": 3,
+    "default_reps": 10,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "shoulder-sleeper-stretch",
+    "name": "Gentle Sleeper Posterior Capsule Stretch",
+    "target_body_area": "shoulder",
+    "secondary_areas": ["posterior_capsule"],
+    "purpose": "Posterior capsule mobilization for internal rotation deficit in overhead athletes.",
+    "instructions": [
+      "Lie on involved side with shoulder and elbow flexed to 90 degrees.",
+      "Use opposite hand to gently push wrist down toward the mat into internal rotation.",
+      "Hold for 30 seconds."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["posterior_capsule_mobility", "internal_rotation", "passive_stretch"],
+    "contraindications": ["anterior_instability", "acute_labral_tear"],
+    "precautions": [
+      "Apply gentle pressure only; avoid anterior joint pinching."
+    ],
+    "verified_sources": [
+      "Wilk KE, et al. The athlete's shoulder rehabilitation. J Orthop Sports Phys Ther. 2012."
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending clinical consensus regarding subacromial contact pressures in acute pain.",
+    "default_sets": 3,
+    "default_reps": null,
+    "default_duration": "30s hold",
+    "frequency": "Daily"
+  },
+  {
+    "id": "lower-back-bird-dog",
+    "name": "Quadruped Bird-Dog",
+    "target_body_area": "lower_back",
+    "secondary_areas": ["glutes", "core"],
+    "purpose": "Spinal stabilization, multifidus activation, and anti-rotational core endurance with minimal compressive axial load.",
+    "instructions": [
+      "Begin on all fours on a padded mat with wrists under shoulders and knees under hips.",
+      "Brace core gently while maintaining neutral lumbar lordosis.",
+      "Slowly extend right arm forward and left leg backward until both align horizontally with torso.",
+      "Hold isometric position for 4 seconds without pelvic rotation or lumbar hyperextension.",
+      "Return to quadruped and alternate opposite extremities."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["lumbar_stabilization", "anti_rotation", "core_stability", "non_compressive"],
+    "contraindications": ["acute_vertebral_compression_fracture", "active_cauda_equina_symptoms"],
+    "precautions": [
+      "Do not raise limbs above horizontal level; avoid hyperextending lumbar spine.",
+      "Maintain neutral cervical spine looking downward."
+    ],
+    "verified_sources": [
+      "McGill SM. Low Back Disorders: Evidence-Based Prevention and Rehabilitation. Human Kinetics; 2007."
+    ],
+    "source_urls": [
+      "https://pubmed.ncbi.nlm.nih.gov/10434422/"
+    ],
+    "review_status": "approved",
+    "review_notes": "Extensively documented low-load spine stabilization exercise (McGill 'Big 3').",
+    "default_sets": 3,
+    "default_reps": 8,
+    "default_duration": "4s hold per rep",
+    "frequency": "Daily"
+  },
+  {
+    "id": "lower-back-mcgill-curlup",
+    "name": "McGill Modified Curl-Up",
+    "target_body_area": "lower_back",
+    "secondary_areas": ["rectus_abdominis", "anterior_core"],
+    "purpose": "Anterior core activation with zero lumbar flexion shear or disc protrusion pressure.",
+    "instructions": [
+      "Lie supine with one leg straight and one knee bent with foot on the floor.",
+      "Place palms facing downward under the lumbar spine to preserve natural lordotic curve.",
+      "Elevate head and shoulder blades slightly off the floor (clearing floor by 1-2 inches).",
+      "Hold isometric contraction for 7-8 seconds while breathing continuously.",
+      "Lower head smoothly, resting 2 seconds before the next repetition."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["core_stability", "isometric_core", "neutral_spine"],
+    "contraindications": ["acute_cervical_disc_herniation_flare"],
+    "precautions": [
+      "Do not tuck chin or curl the lumbar spine; motion originates strictly at thoracic level.",
+      "Hands must remain under lower back to verify lordosis maintenance."
+    ],
+    "verified_sources": [
+      "McGill SM. Low Back Exercises: Evidence for Improving Exercise Regimens. Phys Ther. 1998;78(7):754-765."
+    ],
+    "source_urls": [
+      "https://academic.oup.com/ptj/article/78/7/754/2633100"
+    ],
+    "review_status": "approved",
+    "review_notes": "Clinical gold standard for anterior abdominal endurance without lumbar flexion strain.",
+    "default_sets": 3,
+    "default_reps": 6,
+    "default_duration": "7s hold per rep",
+    "frequency": "Daily"
+  },
+  {
+    "id": "lower-back-cat-cow",
+    "name": "Gentle Cat-Cow Segmental Mobilization",
+    "target_body_area": "lower_back",
+    "secondary_areas": ["thoracic_spine", "pelvis"],
+    "purpose": "Segmental spinal mobility within comfortable mid-range tolerance.",
+    "instructions": [
+      "Start on all fours with wrists under shoulders.",
+      "Inhale, softly dipping the belly while elevating the chest.",
+      "Exhale, gently rounding the spine toward the ceiling.",
+      "Move smoothly through pain-free range."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["spinal_mobility", "segmental_motion", "gentle_mobility"],
+    "contraindications": ["acute_disc_herniation_flare_with_radiculopathy"],
+    "precautions": [
+      "Avoid pushing into painful end-ranges."
+    ],
+    "verified_sources": [
+      "Mayo Clinic Back Conditioning Exercises"
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending clinical panel dosage review for acute disc herniation sub-cohorts.",
+    "default_sets": 2,
+    "default_reps": 10,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "lower-back-glute-bridge-iso",
+    "name": "Supine Glute Bridge Isometric Hold",
+    "target_body_area": "lower_back",
+    "secondary_areas": ["glutes", "hamstrings"],
+    "purpose": "Gluteus maximus activation and pelvic stability to offload compensatory lumbar erector dominance.",
+    "instructions": [
+      "Lie supine with knees bent to 90 degrees, feet flat and hip-width apart.",
+      "Engage core brace and drive through heels to elevate hips until thighs align with torso.",
+      "Squeeze glutes at the top without hyperextending lumbar spine.",
+      "Hold isometric position for 5 seconds, breathing rhythmically.",
+      "Lower hips under control."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["glute_activation", "pelvic_stability", "posterior_chain"],
+    "contraindications": ["acute_hamstring_avulsion", "severe_sacroiliac_flare"],
+    "precautions": [
+      "Do not arch lumbar spine to gain artificial elevation; lift through hip extension.",
+      "Distribute weight evenly through heels."
+    ],
+    "verified_sources": [
+      "American Academy of Orthopaedic Surgeons (AAOS). Spine Conditioning Program."
+    ],
+    "source_urls": [
+      "https://orthoinfo.aaos.org/en/recovery/spine-conditioning-program/"
+    ],
+    "review_status": "approved",
+    "review_notes": "Standard pelvic stabilization drill from AAOS Spine Rehabilitation guidelines.",
+    "default_sets": 3,
+    "default_reps": 10,
+    "default_duration": "5s hold per rep",
+    "frequency": "Daily"
+  },
+  {
+    "id": "hamstring-isometric-bridge",
+    "name": "Supine Submaximal Hamstring Bridge on Bench",
+    "target_body_area": "hamstring",
+    "secondary_areas": ["glutes"],
+    "purpose": "Tendon remodeling and isometric bicep femoris recruitment at lengthened position.",
+    "instructions": [
+      "Lie supine with heels resting on a low bench, knees flexed to 45 degrees.",
+      "Drive heels down into bench to elevate hips 2 inches.",
+      "Hold isometric hold for 30 seconds."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bench",
+    "movement_tags": ["hamstring_isometric", "posterior_chain", "closed_chain"],
+    "contraindications": ["complete_hamstring_rupture", "acute_ischial_avulsion"],
+    "precautions": [
+      "Use double leg hold initially; no ballistic loading."
+    ],
+    "verified_sources": [
+      "Macdonald B, et al. Hamstring strain injury rehabilitation. Sports Med. 2019."
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending clinical protocol validation regarding proximal tendon compression.",
+    "default_sets": 4,
+    "default_reps": null,
+    "default_duration": "30s hold",
+    "frequency": "Daily"
+  },
+  {
+    "id": "hamstring-assisted-eccentric-slide",
+    "name": "Assisted Eccentric Hamstring Slider",
+    "target_body_area": "hamstring",
+    "secondary_areas": ["glutes"],
+    "purpose": "Submaximal eccentric loading to build strain resistance.",
+    "instructions": [
+      "Lie on back with sliders under heels.",
+      "Bridge hips up and slowly slide heels away over 4 seconds.",
+      "Lower hips to floor before resetting."
+    ],
+    "difficulty": "moderate",
+    "equipment": "bodyweight",
+    "movement_tags": ["eccentric_loading", "posterior_chain", "dynamic_control"],
+    "contraindications": ["acute_hamstring_strain_within_72h"],
+    "precautions": [
+      "Double leg only; no active concentric curl under heavy load."
+    ],
+    "verified_sources": [
+      "Askling CM, et al. Hamstring eccentric loading protocols. Br J Sports Med. 2013."
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Requires physical therapy oversight during eccentric phase.",
+    "default_sets": 3,
+    "default_reps": 6,
+    "default_duration": "4s eccentric tempo",
+    "frequency": "2-3x weekly"
+  },
+  {
+    "id": "ankle-tibialis-anterior-raises",
+    "name": "Tibialis Anterior Wall Raises",
+    "target_body_area": "ankle",
+    "secondary_areas": ["shin"],
+    "purpose": "Anterior compartment endurance and deceleration force absorption for shin splint recovery.",
+    "instructions": [
+      "Lean against wall with feet 12 inches out.",
+      "Pull toes and forefoot up toward shins.",
+      "Hold for 1 second, then lower."
+    ],
+    "difficulty": "gentle",
+    "equipment": "wall",
+    "movement_tags": ["dorsiflexion_strengthening", "tibialis_activation", "impact_absorption"],
+    "contraindications": ["acute_anterior_compartment_syndrome"],
+    "precautions": [
+      "Do not rock hips forward."
+    ],
+    "verified_sources": [
+      "Moen MH, et al. Medial tibial stress syndrome management. Sports Med. 2009."
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending clinical validation for tibial stress fracture differentiation.",
+    "default_sets": 3,
+    "default_reps": 20,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "ankle-soleus-bent-knee-raises",
+    "name": "Seated Bent-Knee Soleus Heel Raises",
+    "target_body_area": "ankle",
+    "secondary_areas": ["achilles_tendon", "calves"],
+    "purpose": "Heavy slow resistance load for soleus and Achilles tendon with decreased gastrocnemius contribution.",
+    "instructions": [
+      "Sit upright in a chair with knees bent at 90 degrees and feet flat on the floor.",
+      "Drive through balls of feet to elevate heels into maximal plantarflexion.",
+      "Pause for 2 seconds at peak contraction.",
+      "Lower heels slowly over 3 seconds to a full comfortable stretch."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["plantarflexion_loading", "achilles_remodeling", "soleus_activation"],
+    "contraindications": ["acute_achilles_tendon_rupture", "severe_retrocalcaneal_bursitis_flare"],
+    "precautions": [
+      "Execute with slow controlled cadence; avoid bouncing through end-range.",
+      "Discontinue if sharp localized retrocalcaneal pain occurs."
+    ],
+    "verified_sources": [
+      "Beyer R, Kongsgaard M, Hougs Kjær B, et al. Heavy Slow Resistance Versus Eccentric Training for Achilles Tendinopathy: A Randomized Controlled Trial. Am J Sports Med. 2015;43(7):1704-1711."
+    ],
+    "source_urls": [
+      "https://journals.sagepub.com/doi/10.1177/0363546515584760"
+    ],
+    "review_status": "approved",
+    "review_notes": "Clinically proven Heavy Slow Resistance protocol for Achilles/soleus tendon remodeling.",
+    "default_sets": 3,
+    "default_reps": 15,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "ankle-alphabet-mobilization",
+    "name": "Ankle Multi-Planar Alphabet Mobilization",
+    "target_body_area": "ankle",
+    "secondary_areas": ["foot"],
+    "purpose": "Restoration of multi-planar range of motion and neuromuscular proprioception post-inversion sprain.",
+    "instructions": [
+      "Sit with involved lower extremity elevated and foot freely suspended in air.",
+      "Using the hallux (big toe) as a pointer, trace capital letters of the alphabet from A to Z.",
+      "Form broad, deliberate movements through pain-free range of motion without rotating tibia."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["multi_planar_mobility", "proprioception", "gentle_mobility"],
+    "contraindications": ["acute_unreduced_ankle_fracture", "syndesmotic_diastasis_high_sprain"],
+    "precautions": [
+      "Execute strictly within pain-free boundaries.",
+      "Keep lower leg stable; motion must come from talocrural and subtalar joints."
+    ],
+    "verified_sources": [
+      "Kaminski TW, Hertel J, Amendola N, et al. National Athletic Trainers' Association Position Statement: Conservative Management and Prevention of Ankle Sprains in Athletes. J Athl Train. 2013;48(4):528-545."
+    ],
+    "source_urls": [
+      "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3718356/"
+    ],
+    "review_status": "approved",
+    "review_notes": "NATA position statement recommended early mobilization for lateral ankle sprains.",
+    "default_sets": 1,
+    "default_reps": 1,
+    "default_duration": "A to Z cycle",
+    "frequency": "2-3x daily"
+  },
+  {
+    "id": "neck-chin-tucks",
+    "name": "Cervical Retraction (Chin Tucks)",
+    "target_body_area": "neck",
+    "secondary_areas": ["upper_back"],
+    "purpose": "Deep cervical flexor (longus colli/capitis) activation and suboccipital decompression.",
+    "instructions": [
+      "Sit or stand upright with shoulders relaxed and gaze horizontal.",
+      "Draw the chin horizontally straight back (creating a subtle double chin) without flexing or extending the neck.",
+      "Hold the retracted position for 5 seconds feeling a gentle elongation at base of skull.",
+      "Release smoothly to neutral with relaxed breathing."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["cervical_stabilization", "deep_flexor_activation", "postural_alignment"],
+    "contraindications": ["cervical_spine_instability", "vertebrobasilar_insufficiency_signs"],
+    "precautions": [
+      "Do not tilt head downward; keep motion in a purely horizontal anterior-posterior plane.",
+      "Stop immediately if any dizziness, lightheadedness, or visual changes occur."
+    ],
+    "verified_sources": [
+      "Jull G, Falla D, Treleaven J, et al. Retraining cervical flexor muscle performance in chronic neck pain. Spine. 2008."
+    ],
+    "source_urls": [
+      "https://pubmed.ncbi.nlm.nih.gov/18774949/"
+    ],
+    "review_status": "approved",
+    "review_notes": "Clinical trial evidence for deep neck flexor stabilization in cervical dysfunction.",
+    "default_sets": 3,
+    "default_reps": 10,
+    "default_duration": "5s hold per rep",
+    "frequency": "Multiple times daily"
+  },
+  {
+    "id": "neck-thoracic-extension-foam-roll",
+    "name": "Thoracic Extension over Foam Roller",
+    "target_body_area": "neck",
+    "secondary_areas": ["upper_back", "thoracic_spine"],
+    "purpose": "Thoracic extension mobility restoration to relieve cervical compensatory stress.",
+    "instructions": [
+      "Position foam roller horizontally beneath upper thoracic spine.",
+      "Support head with hands and gently extend upper back.",
+      "Hold 3-5 seconds, then return."
+    ],
+    "difficulty": "gentle",
+    "equipment": "foam_roller",
+    "movement_tags": ["thoracic_extension", "mobility", "postural_alignment"],
+    "contraindications": ["thoracic_osteoporosis_severe", "rib_fracture"],
+    "precautions": [
+      "Support head at all times; do not roll onto lumbar spine."
+    ],
+    "verified_sources": [
+      "APTA Orthopaedic Section Thoracic Guidelines"
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending clinical review for thoracic kyphosis and osteopenia safety margins.",
+    "default_sets": 2,
+    "default_reps": 8,
+    "default_duration": null,
+    "frequency": "Daily"
+  },
+  {
+    "id": "hip-clamshell",
+    "name": "Side-Lying Clamshell",
+    "target_body_area": "hip",
+    "secondary_areas": ["gluteus_medius"],
+    "purpose": "Gluteus medius activation to control femoral internal rotation.",
+    "instructions": [
+      "Lie on unaffected side with knees bent at 90 degrees and feet touching.",
+      "Raise top knee while keeping heels together.",
+      "Hold 2 seconds, then lower."
+    ],
+    "difficulty": "gentle",
+    "equipment": "bodyweight",
+    "movement_tags": ["glute_medius_activation", "pelvic_stability", "non_compressive"],
+    "contraindications": ["acute_greater_trochanteric_pain_severe"],
+    "precautions": [
+      "Do not roll pelvis backward."
+    ],
+    "verified_sources": [
+      "Distefano LJ, et al. Gluteal muscle activation during rehabilitation. J Orthop Sports Phys Ther. 2009."
+    ],
+    "source_urls": [],
+    "review_status": "pending_review",
+    "review_notes": "Pending clinical panel dosage review for tensor fasciae latae dominance screening.",
+    "default_sets": 3,
+    "default_reps": 15,
+    "default_duration": null,
+    "frequency": "Daily"
+  }
+]
