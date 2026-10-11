@@ -22,6 +22,10 @@ export interface RecoveryActivity {
   instructions?: string[] | string;
   videoThumbnailUrl?: string;
   mediaUrl?: string;
+  reviewStatus?: "approved" | "pending_review" | string;
+  clinicalEvidence?: string;
+  verifiedSources?: string[];
+  sourceUrls?: string[];
 }
 
 export interface RecoveryPhase {
@@ -55,4 +59,8 @@ export interface RecoveryPlan {
   createdAt?: string;
   sourcePrediction?: PredictionResult | BiomechanicalRiskPrediction | null;
   sourceAssessment?: AssessmentData | null;
+  triageLevel?: "standard_monitoring" | "prompt_medical_assessment" | "emergency" | string;
+  safetySummary?: string;
+  appliedGuidanceRules?: Array<{ rule_id: string; name: string; clinical_citation?: string; evidence_summary?: string }>;
+  activeRestrictions?: string[];
 }

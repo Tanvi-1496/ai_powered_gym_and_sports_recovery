@@ -10,7 +10,6 @@ import {
   Clock,
   HeartPulse,
   HelpCircle,
-  Info,
   PlusCircle,
   RefreshCw,
   Shield,
@@ -18,7 +17,6 @@ import {
   Sparkles,
   Stethoscope,
   Layers,
-  FileQuestion,
 } from "lucide-react";
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 import { GradientButton } from "@/components/ui/gradient-button";
@@ -32,9 +30,18 @@ import { ALL_BODY_REGIONS } from "@/features/assessment/BodyMapStep";
 import {
   getRecoveryCheckins,
   predictRecoveryScore,
+  getBiomechanicalRiskAssessment,
+  getClinicalTriageGuidance,
   type RecoveryScoreResponse,
 } from "@/services/recovery";
 import type { BiomechanicalRiskPrediction, ClinicalTriageGuidance } from "@/types/prediction";
+import {
+  simplifyFactorText,
+  formatRestrictionCode,
+  formatTriageHeading,
+  getRecoveryScoreExplanation,
+  simplifyExerciseBenefit,
+} from "@/utils/textSimplifier";
 
 export const AssessmentResultsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,9 +55,13 @@ export const AssessmentResultsPage: React.FC = () => {
   const [predictionError, setPredictionError] = useState<string | null>(null);
   const [predictionTimestamp, setPredictionTimestamp] = useState<string>("");
 
-  // Future ML Model State Contracts (Typed for future teammate integration)
-  const [injuryRiskPrediction] = useState<BiomechanicalRiskPrediction | null>(null);
-  const [clinicalGuidance] = useState<ClinicalTriageGuidance | null>(null);
+  // Biomechanical Injury Risk State
+  const [injuryRiskPrediction, setInjuryRiskPrediction] = useState<BiomechanicalRiskPrediction | null>(null);
+  const [riskLoading, setRiskLoading] = useState<boolean>(false);
+
+  // Clinical Guidance & Triage State
+  const [clinicalGuidance, setClinicalGuidance] = useState<ClinicalTriageGuidance | null>(null);
+  const [guidanceLoading, setGuidanceLoading] = useState<boolean>(false);
 
   // How It Works Accordion
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
@@ -90,9 +101,11 @@ export const AssessmentResultsPage: React.FC = () => {
       } else {
         setLatestPrediction(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("[AssessmentResults] Could not load recovery telemetry:", err);
-      setPredictionError("Recovery score unavailable");
+      const detail = err?.response?.data?.detail;
+      const msg = typeof detail === "string" ? detail : "Recovery score unavailable. Please check your connection or submit a check-in.";
+      setPredictionError(msg);
     } finally {
       setPredictionLoading(false);
     }
@@ -137,6 +150,26 @@ export const AssessmentResultsPage: React.FC = () => {
 
       setAssessment(current);
       setLoading(false);
+
+      if (current) {
+        setRiskLoading(true);
+        setGuidanceLoading(true);
+        Promise.all([
+          getBiomechanicalRiskAssessment(current),
+          getClinicalTriageGuidance(current),
+        ])
+          .then(([risk, guidance]) => {
+            setInjuryRiskPrediction(risk);
+            setClinicalGuidance(guidance);
+          })
+          .catch((err) => {
+            console.warn("[AssessmentResultsPage] Failed to fetch risk or guidance:", err);
+          })
+          .finally(() => {
+            setRiskLoading(false);
+            setGuidanceLoading(false);
+          });
+      }
     }
 
     loadData();
@@ -287,7 +320,7 @@ export const AssessmentResultsPage: React.FC = () => {
             Your Assessment Results
           </h1>
           <p className="text-sm sm:text-base text-[#B8AEC8]">
-            Review your assessment, recovery readiness, and next steps.
+            Review your recovery score, estimated strain, and safety guidance.
           </p>
         </div>
 
@@ -301,7 +334,7 @@ export const AssessmentResultsPage: React.FC = () => {
               </h2>
             </div>
             <span className="text-xs text-[#B8AEC8] font-mono">
-              Submitted Profile
+              Your Check-In
             </span>
           </div>
 
@@ -323,7 +356,7 @@ export const AssessmentResultsPage: React.FC = () => {
                   </span>
                 ))}
                 {(!assessment.body_areas || assessment.body_areas.length === 0) && (
-                  <p className="text-sm font-semibold text-[#E9E2F5]">General Kinetic Chain</p>
+                  <p className="text-sm font-semibold text-[#E9E2F5]">General Body</p>
                 )}
               </div>
             </div>
@@ -356,7 +389,7 @@ export const AssessmentResultsPage: React.FC = () => {
             {/* Activity & Context */}
             <div className="space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                Sport / Activity & Context
+                Sport / Activity & Timing
               </span>
               <p className="text-sm font-bold text-[#FFFDF9]">
                 {formatActivityName()}
@@ -371,7 +404,7 @@ export const AssessmentResultsPage: React.FC = () => {
             {/* Onset & Duration */}
             <div className="space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                Onset & Duration
+                How It Started & Duration
               </span>
               <p className="text-sm font-bold text-[#FFFDF9]">
                 {formatOnset(assessment.onset_type)}
@@ -383,10 +416,10 @@ export const AssessmentResultsPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Pain / Severity Rating */}
+            {/* Pain Level */}
             <div className="space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                Pain / Severity Rating
+                Pain Level
               </span>
               <div className="flex items-center gap-3 pt-0.5">
                 <span className="text-xl font-black font-mono text-[#F97368]">
@@ -417,7 +450,7 @@ export const AssessmentResultsPage: React.FC = () => {
             {assessment.additional_details && (
               <div className="md:col-span-2 pt-2 border-t border-[#7C3AED]/15 space-y-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                  Athlete Subjective Notes
+                  Your Notes
                 </span>
                 <p className="text-xs sm:text-sm text-[#E9E2F5] bg-[#120D26]/70 p-3 rounded-xl border border-[#7C3AED]/20 italic">
                   &ldquo;{assessment.additional_details}&rdquo;
@@ -431,14 +464,14 @@ export const AssessmentResultsPage: React.FC = () => {
         {/* ── Desktop Two-Column Responsive Grid ─────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* ── Left Column: 3. Recovery Readiness Score Card ───────────── */}
+          {/* ── Left Column: 3. Recovery Score Card ───────────── */}
           <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#18132D] via-[#21183A] to-[#18132D] border border-[#7C3AED]/35 shadow-xl space-y-5 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-[#7C3AED]/15">
                 <div className="flex items-center gap-2">
                   <HeartPulse className="w-5 h-5 text-[#F97368]" />
                   <h2 className="text-lg font-bold font-display text-[#FFFDF9]">
-                    Recovery Readiness
+                    Recovery Score
                   </h2>
                 </div>
 
@@ -448,7 +481,13 @@ export const AssessmentResultsPage: React.FC = () => {
                       latestPrediction.tier
                     )}`}
                   >
-                    {latestPrediction.score_tier || `${latestPrediction.tier} Tier`}
+                    {latestPrediction.tier === "optimal"
+                      ? "Good"
+                      : latestPrediction.tier === "moderate"
+                      ? "Moderate"
+                      : latestPrediction.tier === "low"
+                      ? "Low"
+                      : "Needs Rest"}
                   </span>
                 ) : predictionLoading ? (
                   <span className="text-xs text-[#B8AEC8]">Calculating...</span>
@@ -466,19 +505,34 @@ export const AssessmentResultsPage: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-[#FF6B6B]/15 border border-[#FF6B6B]/30 space-y-3 text-center sm:text-left">
                   <div className="flex items-center gap-2 text-[#FF6B6B]">
                     <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span className="text-xs font-bold text-[#FFFDF9]">Recovery score unavailable</span>
+                    <span className="text-xs font-bold text-[#FFFDF9]">
+                      {predictionError.toLowerCase().includes("session") || predictionError.toLowerCase().includes("log in")
+                        ? "Session Expired"
+                        : "Recovery Score Unavailable"}
+                    </span>
                   </div>
                   <p className="text-xs text-[#E9E2F5]/80">
-                    Unable to compute telemetry prediction. Check your network or submit a check-in.
+                    {predictionError}
                   </p>
-                  <button
-                    type="button"
-                    onClick={fetchTelemetryPrediction}
-                    className="px-3 py-1.5 rounded-xl bg-[#21183A] text-xs font-bold text-[#FFFDF9] border border-[#7C3AED]/30 hover:border-[#F97368] flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Retry Prediction</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={fetchTelemetryPrediction}
+                      className="px-3 py-1.5 rounded-xl bg-[#21183A] text-xs font-bold text-[#FFFDF9] border border-[#7C3AED]/30 hover:border-[#F97368] flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Retry</span>
+                    </button>
+                    {(predictionError.toLowerCase().includes("session") || predictionError.toLowerCase().includes("log in")) && (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/login")}
+                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#7C3AED] to-[#F97368] text-xs font-bold text-[#FFFDF9] hover:opacity-90 transition-opacity cursor-pointer"
+                      >
+                        <span>Sign In Again</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : latestPrediction ? (
                 <div className="space-y-4">
@@ -486,7 +540,7 @@ export const AssessmentResultsPage: React.FC = () => {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-[#120D26]/80 border border-[#7C3AED]/25">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                        Calculated Readiness
+                        Your Recovery Score
                       </span>
                       <div className="flex items-baseline gap-1 mt-0.5">
                         <span className="text-4xl sm:text-5xl font-black font-display text-gradient-coral-peach">
@@ -519,21 +573,21 @@ export const AssessmentResultsPage: React.FC = () => {
                       />
                     </div>
                     <div className="flex justify-between text-[10px] text-[#B8AEC8] font-mono">
-                      <span>0 (Fatigued)</span>
+                      <span>0 (Needs Rest)</span>
                       <span>50 (Moderate)</span>
                       <span>100 (Optimal)</span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-[#B8AEC8] leading-relaxed">
-                    A model-estimated recovery/readiness score based on available athlete data.
+                  <p className="text-xs text-[#E9E2F5] leading-relaxed bg-[#120D26]/70 p-3 rounded-xl border border-[#7C3AED]/20">
+                    {getRecoveryScoreExplanation(latestPrediction.score, latestPrediction.contributing_factors)}
                   </p>
 
-                  {/* Contributing Factors if present */}
+                  {/* What Affected Your Score */}
                   {latestPrediction.contributing_factors && latestPrediction.contributing_factors.length > 0 && (
                     <div className="pt-2 border-t border-[#7C3AED]/15 space-y-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                        Observed Physiological Drivers
+                        What Affected Your Score
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {latestPrediction.contributing_factors.map((factor, idx) => (
@@ -542,7 +596,7 @@ export const AssessmentResultsPage: React.FC = () => {
                             className="px-2.5 py-1 rounded-lg bg-[#18132D] border border-[#7C3AED]/20 text-[11px] text-[#E9E2F5] flex items-center gap-1.5"
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-[#F97368]" />
-                            <span>{factor}</span>
+                            <span>{simplifyFactorText(factor)}</span>
                           </span>
                         ))}
                       </div>
@@ -550,14 +604,14 @@ export const AssessmentResultsPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                /* No telemetry logged yet */
+                /* No check-in logged yet */
                 <div className="p-4 rounded-2xl bg-[#120D26]/60 border border-[#7C3AED]/20 text-center space-y-2 py-5">
                   <Sparkles className="w-6 h-6 text-[#FDBA8C] mx-auto opacity-70" />
                   <p className="text-xs font-semibold text-[#FFFDF9]">
-                    Daily check-in telemetry pending
+                    Daily check-in needed
                   </p>
                   <p className="text-[11px] text-[#B8AEC8] max-w-xs mx-auto">
-                    A model-estimated recovery/readiness score based on available athlete data. Log your daily sleep & soreness metrics to generate your score.
+                    Log your daily sleep and soreness in a check-in to compute your recovery score.
                   </p>
                 </div>
               )}
@@ -572,7 +626,7 @@ export const AssessmentResultsPage: React.FC = () => {
               >
                 <span className="flex items-center gap-1.5">
                   <HelpCircle className="w-3.5 h-3.5 text-[#F97368]" />
-                  <span>How this score works</span>
+                  <span>How your recovery score works</span>
                 </span>
                 {isHowItWorksOpen ? (
                   <ChevronUp className="w-4 h-4 text-[#B8AEC8]" />
@@ -584,57 +638,100 @@ export const AssessmentResultsPage: React.FC = () => {
               {isHowItWorksOpen && (
                 <div className="mt-2 p-3.5 rounded-xl bg-[#120D26]/80 border border-[#7C3AED]/20 text-[11px] text-[#B8AEC8] leading-relaxed space-y-1.5 animate-in fade-in duration-200">
                   <p>
-                    This score estimates your autonomic recovery and physiological training readiness based on available telemetry (such as sleep duration, resting heart rate, HRV, and perceived muscle soreness).
+                    This score estimates how ready your body may be for training based on your sleep, resting heart rate, heart rate variability (HRV), and muscle soreness.
                   </p>
                   <p className="text-[#FDBA8C] font-semibold">
-                    Important: This score is a wellness recovery readiness estimate and is not an injury probability or certified clinical diagnosis.
+                    This score is a wellness guide to help you train smartly. It is not an injury test or medical diagnosis.
                   </p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Right Column: Stacked Cards (Injury Risk + Clinical Guidance) ── */}
+          {/* ── Right Column: Stacked Cards (Injury & Strain Check + Safety Guidance) ── */}
           <div className="space-y-6 flex flex-col justify-between">
 
-            {/* ── 4. Injury Risk Prediction Card ─────────────────────────── */}
+            {/* ── 4. Injury & Strain Check Card ─────────────────────────── */}
             <div className="p-6 sm:p-7 rounded-3xl bg-[#18132D] border border-[#7C3AED]/25 shadow-xl space-y-4">
               {/* Region 1: Header & Status Badge */}
               <div className="flex items-center justify-between pb-2 border-b border-[#7C3AED]/15">
                 <div className="flex items-center gap-2">
                   <ShieldAlert className="w-5 h-5 text-[#FDBA8C]" />
                   <h2 className="text-lg font-bold font-display text-[#FFFDF9]">
-                    Injury Risk Prediction
+                    Injury & Strain Check
                   </h2>
                 </div>
 
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/35 text-[10px] font-bold uppercase tracking-wider text-[#FDBA8C]">
-                  <span>{injuryRiskPrediction?.status === "completed" ? "Model Integrated" : "Awaiting model integration"}</span>
+                  {riskLoading ? (
+                    <span>Evaluating...</span>
+                  ) : (
+                    <span>Active</span>
+                  )}
                 </span>
               </div>
 
               {/* Region 2: Description */}
               <p className="text-xs text-[#B8AEC8] leading-relaxed">
-                This module will estimate injury risk using the dedicated injury-risk model.
+                An estimate of strain based on your reported symptoms, activity, and recovery.
               </p>
 
-              {/* Region 3: Prediction Region (Reserved / Ready for Model Output) */}
-              {injuryRiskPrediction?.status === "completed" && injuryRiskPrediction.riskScore !== null ? (
-                <div className="p-4 rounded-2xl bg-[#120D26]/90 border border-[#7C3AED]/30 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#E9E2F5]">Risk Level:</span>
-                    <span className="text-xs font-bold text-[#FDBA8C] uppercase">{injuryRiskPrediction.riskLevel}</span>
+              {/* Region 3: Prediction Region */}
+              {riskLoading ? (
+                <div className="space-y-3 py-4 animate-pulse">
+                  <div className="h-10 w-full bg-[#21183A] rounded-xl" />
+                  <div className="h-4 w-3/4 bg-[#21183A] rounded-md" />
+                </div>
+              ) : injuryRiskPrediction && injuryRiskPrediction.riskLevel ? (
+                <div className="p-4 rounded-2xl bg-[#120D26]/90 border border-[#7C3AED]/30 space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                        Strain Level
+                      </span>
+                      <span
+                        className={`text-sm font-black uppercase font-display ${
+                          injuryRiskPrediction.riskLevel === "low"
+                            ? "text-[#10B981]"
+                            : injuryRiskPrediction.riskLevel === "moderate"
+                            ? "text-[#F59E0B]"
+                            : injuryRiskPrediction.riskLevel === "elevated"
+                            ? "text-[#F97368]"
+                            : "text-[#EF4444]"
+                        }`}
+                      >
+                        {injuryRiskPrediction.riskLevel} Strain
+                      </span>
+                    </div>
+
+                    {injuryRiskPrediction.riskScore !== null && (
+                      <div className="text-right">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                          Strain Index
+                        </span>
+                        <span className="text-xl font-black font-mono text-[#FDBA8C]">
+                          {Math.round(injuryRiskPrediction.riskScore)}
+                          <span className="text-xs text-[#B8AEC8] font-normal"> / 100</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-[#FFFDF9]">Target: {injuryRiskPrediction.predictedRiskArea}</p>
+
+                  {injuryRiskPrediction.predictedRiskArea && (
+                    <div className="text-xs text-[#E9E2F5] pt-1 border-t border-[#7C3AED]/15 flex items-center justify-between">
+                      <span className="text-[#B8AEC8]">Main Area:</span>
+                      <span className="font-semibold text-[#FFFDF9]">{injuryRiskPrediction.predictedRiskArea}</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="p-4 rounded-2xl bg-[#120D26]/70 border border-[#7C3AED]/20 space-y-1.5">
                   <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#FDBA8C]">
                     <Layers className="w-3.5 h-3.5" />
-                    <span>Prediction Output Pipeline</span>
+                    <span>Strain Check</span>
                   </div>
                   <p className="text-xs text-[#B8AEC8]/80 leading-relaxed">
-                    Calibrated risk probabilities and anatomical strain likelihood will populate here once the dedicated injury-risk inference service is connected.
+                    Complete an assessment to check your estimated strain level.
                   </p>
                 </div>
               )}
@@ -643,108 +740,151 @@ export const AssessmentResultsPage: React.FC = () => {
               {injuryRiskPrediction?.contributingFactors && injuryRiskPrediction.contributingFactors.length > 0 ? (
                 <div className="space-y-1.5 pt-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                    Contributing Factors
+                    Possible Causes
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {injuryRiskPrediction.contributingFactors.map((factor) => (
-                      <span key={factor.id} className="px-2.5 py-1 rounded-lg bg-[#21183A] text-[11px] text-[#E9E2F5]">
-                        {factor.name}
+                      <span
+                        key={factor.id}
+                        className="px-2.5 py-1 rounded-lg bg-[#21183A] border border-[#7C3AED]/25 text-[11px] text-[#E9E2F5] flex items-center gap-1.5"
+                      >
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            factor.impactLevel === "high"
+                              ? "bg-[#EF4444]"
+                              : factor.impactLevel === "moderate"
+                              ? "bg-[#F59E0B]"
+                              : "bg-[#10B981]"
+                          }`}
+                        />
+                        <span>{simplifyFactorText(factor.name)}</span>
                       </span>
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className="p-3.5 rounded-xl bg-[#120D26]/40 border border-[#7C3AED]/15 text-[11px] text-[#B8AEC8] flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5 text-[#A78BFA] shrink-0" />
-                  <span>Contributing biomechanical factors will populate only when provided by the model.</span>
-                </div>
-              )}
+              ) : null}
 
               {/* Region 5: Explanation Region */}
               {injuryRiskPrediction?.explanation ? (
                 <p className="text-xs text-[#E9E2F5]/90 leading-relaxed p-3 rounded-xl bg-[#120D26]/60 border border-[#7C3AED]/20">
-                  {injuryRiskPrediction.explanation}
+                  {simplifyExerciseBenefit(injuryRiskPrediction.explanation)}
                 </p>
               ) : (
-                <div className="p-3 rounded-xl bg-[#120D26]/30 border border-[#7C3AED]/10 text-[11px] text-[#B8AEC8]/70 flex items-center gap-2">
-                  <FileQuestion className="w-3.5 h-3.5 text-[#7C3AED] shrink-0" />
-                  <span>Model rationale and biomechanical context will be shown here.</span>
-                </div>
+                <p className="text-xs text-[#E9E2F5]/90 leading-relaxed p-3 rounded-xl bg-[#120D26]/60 border border-[#7C3AED]/20">
+                  This estimate is based on your reported symptoms and recent training activity.
+                </p>
               )}
 
               {/* Region 6: Footer */}
               <div className="pt-2 border-t border-[#7C3AED]/15 text-[10px] text-[#B8AEC8]/70 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
-                <span>Module is reserved and will be activated upon teammate backend model integration.</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                <span>Estimate based on your reported symptoms. Not a medical diagnosis.</span>
               </div>
             </div>
 
-            {/* ── 5. Clinical Guidance Card ──────────────────────────────── */}
+            {/* ── 5. Safety Guidance Card ──────────────────────────────── */}
             <div className="p-6 sm:p-7 rounded-3xl bg-[#18132D] border border-[#7C3AED]/25 shadow-xl space-y-4">
               {/* Region 1: Header & Status Badge */}
               <div className="flex items-center justify-between pb-2 border-b border-[#7C3AED]/15">
                 <div className="flex items-center gap-2">
                   <Stethoscope className="w-5 h-5 text-[#10B981]" />
                   <h2 className="text-lg font-bold font-display text-[#FFFDF9]">
-                    Clinical Guidance
+                    Safety Guidance
                   </h2>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/35 text-[10px] font-bold uppercase tracking-wider text-[#A78BFA]">
-                  <span>{clinicalGuidance?.status === "available" ? "Guidance Active" : "Guidance integration pending"}</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/30 text-[10px] font-bold uppercase tracking-wider text-[#10B981]">
+                  {guidanceLoading ? (
+                    <span>Evaluating...</span>
+                  ) : (
+                    <span>Active</span>
+                  )}
                 </span>
               </div>
 
               {/* Region 2: Short Description */}
               <p className="text-xs text-[#B8AEC8] leading-relaxed">
-                This section will provide consultation guidance from the dedicated clinical rules module.
+                Safety advice and movement tips based on your reported symptoms.
               </p>
 
-              {/* Region 3: Reserved Guidance Output Area */}
-              {clinicalGuidance?.status === "available" && clinicalGuidance.primaryRecommendation ? (
-                <div className="p-4 rounded-2xl bg-[#120D26]/90 border border-[#7C3AED]/30 space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] block">
-                    Clinical Recommendation
-                  </span>
-                  <p className="text-xs text-[#FFFDF9] leading-relaxed">{clinicalGuidance.primaryRecommendation}</p>
+              {/* Region 3: Safety Guidance / Urgency Banner */}
+              {guidanceLoading ? (
+                <div className="space-y-3 py-4 animate-pulse">
+                  <div className="h-10 w-full bg-[#21183A] rounded-xl" />
+                  <div className="h-4 w-3/4 bg-[#21183A] rounded-md" />
                 </div>
-              ) : (
-                <div className="p-4 rounded-2xl bg-[#120D26]/70 border border-[#7C3AED]/20 space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
-                    Triage & Advisory Protocol
-                  </span>
-                  <p className="text-xs text-[#B8AEC8]/80 leading-relaxed">
-                    Sports medicine clinical triage, specialist consultation recommendations, and red-flag screening will be displayed once the clinical rules module is connected.
-                  </p>
-                </div>
-              )}
+              ) : clinicalGuidance ? (
+                <div className="space-y-3">
+                  {/* Triage Urgency Banner */}
+                  {(() => {
+                    const banner = formatTriageHeading(clinicalGuidance.urgency, clinicalGuidance.triageLevel);
+                    return (
+                      <div
+                        className={`p-3.5 rounded-2xl border flex items-start gap-2.5 ${
+                          clinicalGuidance.urgency === "urgent_medical" || clinicalGuidance.triageLevel === "emergency"
+                            ? "bg-[#EF4444]/15 border-[#EF4444]/35 text-[#FCA5A5]"
+                            : clinicalGuidance.urgency === "clinical_evaluation" || clinicalGuidance.triageLevel === "prompt_medical_assessment"
+                            ? "bg-[#F59E0B]/15 border-[#F59E0B]/35 text-[#FDE68A]"
+                            : "bg-[#10B981]/15 border-[#10B981]/35 text-[#A7F3D0]"
+                        }`}
+                      >
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider block">
+                            {banner.title}
+                          </span>
+                          <p className="text-xs leading-relaxed text-[#FFFDF9]/90">
+                            {clinicalGuidance.primaryRecommendation
+                              ? clinicalGuidance.primaryRecommendation.replace(/Active restrictions enforced:[^.]*\.?/gi, "").trim()
+                              : banner.subtitle}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
-              {/* Region 4: Reserved Urgency / Status Area (Only if future service returns it) */}
-              {clinicalGuidance?.urgency && (
-                <div className="p-3 rounded-xl bg-[#21183A] border border-[#7C3AED]/30 text-xs text-[#FFFDF9] flex items-center justify-between">
-                  <span className="text-[#B8AEC8]">Urgency Level:</span>
-                  <span className="font-bold uppercase text-[#FDBA8C]">{clinicalGuidance.urgency.replace(/_/g, " ")}</span>
-                </div>
-              )}
+                  {/* Movement Tips if any restrictions */}
+                  {clinicalGuidance.restrictionCodes && clinicalGuidance.restrictionCodes.length > 0 && (
+                    <div className="p-3 rounded-xl bg-[#120D26]/70 border border-[#7C3AED]/20 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#FDBA8C] block">
+                        Movement Tips
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        {clinicalGuidance.restrictionCodes.map((code) => (
+                          <span
+                            key={code}
+                            className="px-2.5 py-1 rounded-md bg-[#21183A] border border-[#FDBA8C]/30 text-xs font-semibold text-[#FDBA8C]"
+                          >
+                            {formatRestrictionCode(code)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-              {/* Region 5: Reserved Explanation Area */}
-              {clinicalGuidance?.explanation ? (
-                <p className="text-xs text-[#E9E2F5]/90 leading-relaxed p-3 rounded-xl bg-[#120D26]/60 border border-[#7C3AED]/20">
-                  {clinicalGuidance.explanation}
-                </p>
-              ) : (
-                <div className="p-3 rounded-xl bg-[#F97368]/10 border border-[#F97368]/25 text-[11px] text-[#FDBA8C] leading-relaxed flex items-start gap-2">
-                  <Shield className="w-3.5 h-3.5 text-[#F97368] shrink-0 mt-0.5" />
-                  <span>
-                    Always consult a licensed medical professional for acute physical trauma or severe joint instability.
-                  </span>
+                  {/* Guidelines & References */}
+                  {clinicalGuidance.appliedRules && clinicalGuidance.appliedRules.length > 0 && (
+                    <div className="p-3 rounded-xl bg-[#120D26]/60 border border-[#7C3AED]/15 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#A78BFA] block">
+                        Guideline References
+                      </span>
+                      <div className="space-y-1">
+                        {clinicalGuidance.appliedRules.map((rule) => (
+                          <div key={rule.rule_id} className="text-[11px] text-[#B8AEC8] leading-tight">
+                            <span className="font-semibold text-[#FFFDF9]">{rule.name}:</span>{" "}
+                            <span>{rule.evidence_summary || rule.clinical_citation}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              ) : null}
 
               {/* Region 6: Footer */}
               <div className="pt-2 border-t border-[#7C3AED]/15 text-[10px] text-[#B8AEC8]/70 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
-                <span>Guidance module is unavailable until clinical rule integration is complete.</span>
+                <Shield className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+                <span>General guidance only. Not a medical diagnosis or substitute for professional care.</span>
               </div>
             </div>
 

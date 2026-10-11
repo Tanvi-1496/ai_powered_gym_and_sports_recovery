@@ -13,6 +13,10 @@ from sqlalchemy import text
 
 from app.models.recovery import RecoveryCheckin
 from app.services.ml_recovery import is_valid_uuid, predict_recovery_for_checkin
+from app.schemas.guidance import AthleteClinicalPresentation
+from app.services.doctor_guidance import evaluate_doctor_guidance
+from app.schemas.exercises import ExerciseAssessmentRequest
+from app.services.exercise_recommender import recommend_exercises
 
 
 def get_anatomy_category(body_areas: List[str]) -> str:
@@ -485,7 +489,7 @@ def build_phase_activities(
                 "repetitions": 1,
                 "frequency": "Daily",
                 "difficulty": "gentle",
-                "safetyNote": "Promotes parasympathetic nervous system recovery and HRV elevation.",
+                "safetyNote": "Helps you relax and may support recovery.",
             },
             {
                 "id": "kc_p1_2",
@@ -497,7 +501,7 @@ def build_phase_activities(
                 "repetitions": 6,
                 "frequency": "1-2x daily",
                 "difficulty": "gentle",
-                "safetyNote": "Move smoothly without bouncing at end ranges.",
+                "safetyNote": "Move slowly and avoid bouncing.",
             },
         ]
         p2 = [
@@ -652,10 +656,41 @@ def generate_personalized_recovery_plan(user_id: str, db: Session) -> Dict[str, 
             print("[generate_plan] Assessment query error:", e)
 
     body_areas = assessment_data.get("body_areas") or []
+    eval_body_areas = body_areas if body_areas else ["general"]
     pain_level = assessment_data.get("pain_severity", 3)
+    symptoms = assessment_data.get("symptoms") or []
+    duration = assessment_data.get("duration") or "1-3_days"
+    movement_limitation = assessment_data.get("movement_limitation") or "none"
     region_category = get_anatomy_category(body_areas)
 
-    # 3. Fetch latest recovery check-in and compute ML score
+    # 3. Clinical Triage & Guidance (Module 2) + Audited Exercise Recommendations (Module 3)
+    limitations_list = (
+        [movement_limitation]
+        if movement_limitation and movement_limitation.lower() not in ["none", "no limitation"]
+        else []
+    )
+    guidance_eval = evaluate_doctor_guidance(
+        AthleteClinicalPresentation(
+            body_areas=eval_body_areas,
+            pain_severity=pain_level,
+            symptoms=symptoms,
+            duration=duration,
+            movement_limitations=limitations_list,
+        )
+    )
+
+    rec_result = recommend_exercises(
+        ExerciseAssessmentRequest(
+            body_areas=eval_body_areas,
+            symptoms=symptoms,
+            pain_severity=pain_level,
+            duration=duration,
+            movement_limitations=limitations_list,
+            doctor_guidance=guidance_eval.module3_doctor_guidance,
+        )
+    )
+
+    # 4. Fetch latest recovery check-in and compute ML score
     latest_checkin = None
     prediction = None
     if is_valid_uuid(user_id):
@@ -682,7 +717,7 @@ def generate_personalized_recovery_plan(user_id: str, db: Session) -> Dict[str, 
     readiness_score = prediction["score"] if prediction else 55.0
     readiness_tier = prediction["tier"] if prediction else "moderate"
 
-    # 4. Generate structured 4-phase activities
+    # 5. Generate structured 4-phase activities
     phases = build_phase_activities(
         region=region_category,
         sport=sport,
@@ -690,15 +725,53 @@ def generate_personalized_recovery_plan(user_id: str, db: Session) -> Dict[str, 
         readiness_score=readiness_score,
     )
 
+    # Enhance phases with approved clinical catalog activities if recommended
+    if rec_result.activities:
+        approved_acts = []
+        for act in rec_result.activities:
+            approved_acts.append({
+                "id": act.id,
+                "name": act.name,
+                "description": act.description,
+                "targetArea": act.targetArea,
+                "duration": act.duration,
+                "sets": act.sets,
+                "repetitions": act.repetitions,
+                "frequency": act.frequency,
+                "difficulty": act.difficulty,
+                "completed": False,
+                "safetyNote": act.safetyNote,
+                "reviewStatus": getattr(act, "reviewStatus", "approved"),
+                "clinicalEvidence": getattr(act, "clinicalEvidence", None),
+                "verifiedSources": getattr(act, "verifiedSources", None),
+                "sourceUrls": getattr(act, "sourceUrls", None),
+            })
+
+        p1_acts = [a for a in approved_acts if a.get("difficulty") == "gentle"]
+        p2_acts = [a for a in approved_acts if a.get("difficulty") != "gentle"]
+
+        if p1_acts and len(phases) > 0:
+            existing_ids = {a["id"] for a in phases[0]["activities"]}
+            phases[0]["activities"] = p1_acts + [a for a in phases[0]["activities"] if a["id"] not in existing_ids][:2]
+        if p2_acts and len(phases) > 1:
+            existing_ids = {a["id"] for a in phases[1]["activities"]}
+            phases[1]["activities"] = p2_acts + [a for a in phases[1]["activities"] if a["id"] not in existing_ids][:2]
+
     total_activities = sum(len(p["activities"]) for p in phases)
 
-    # 5. Build tailored safety guidelines grounded in real assessment data
+    # 6. Build tailored safety guidelines grounded in real assessment data & clinical triage
     guidelines = [
-        f"Perform all exercises in a pain-free envelope (discomfort ≤ {min(2, pain_level)}/10). If pain spikes, regress immediately.",
-        f"Calibrate movement tempo to your current {sport} recovery demands: 3s eccentric, 1s isometric pause, smooth concentric.",
-        "Ensure adequate systemic hydration (2.5–3L daily) and target 7.5–9.0 hours of uninterrupted sleep for physiological rebuilding.",
-        "Consult a licensed physical therapist or sports medicine physician if symptoms persist, worsen, or impede daily ambulation.",
+        f"Stop or make the movement easier if pain goes above {min(2, pain_level)}/10.",
+        f"Move in a slow, controlled way suited to your {sport} training.",
+        "Drink plenty of water (around 2.5–3 liters daily) and aim for 7.5–9 hours of sleep to support recovery.",
+        "Talk to a physical therapist or doctor if your pain gets worse or makes it hard to walk.",
     ]
+
+    if guidance_eval.triage_level == "emergency":
+        guidelines.insert(0, "Important Safety Notice: Immediate medical attention recommended. Stop exercising and seek medical care right away.")
+    elif guidance_eval.triage_level == "prompt_medical_assessment":
+        restrictions_text = ", ".join(guidance_eval.active_restriction_codes).replace("_", " ") if guidance_eval.active_restriction_codes else "None"
+        guidelines.insert(0, f"Important Notice: Medical evaluation recommended. Movement tips: {restrictions_text}.")
 
     plan_id = f"plan_{user_id}_{region_category}" if user_id else f"plan_local_{uuid.uuid4().hex[:8]}"
 
@@ -716,6 +789,10 @@ def generate_personalized_recovery_plan(user_id: str, db: Session) -> Dict[str, 
         "safetyGuidelines": guidelines,
         "recoveryScore": readiness_score,
         "readinessTier": readiness_tier,
+        "triageLevel": guidance_eval.triage_level,
+        "safetySummary": rec_result.safety_summary or guidance_eval.clinical_summary,
+        "appliedGuidanceRules": [r.model_dump() for r in guidance_eval.applied_guidance_rules],
+        "activeRestrictions": guidance_eval.active_restriction_codes,
         "disclaimer": (
             "REVORA provides evidence-based sports wellness and active recovery protocols. "
             "This is not a clinical medical diagnosis or prescription. Consult a licensed clinician for clinical rehabilitation."

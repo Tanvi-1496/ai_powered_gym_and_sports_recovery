@@ -189,46 +189,46 @@ def predict_recovery_for_checkin(
     score = round(float(np.clip(raw_pred, 0.0, 100.0)), 1)
     tier = get_score_tier(score)
 
-    # Compute key physiological drivers
+    # Compute key factors affecting score
     factors: List[str] = []
     if sleep_hours >= 7.5:
-        factors.append(f"Optimal sleep duration ({sleep_hours}h)")
+        factors.append(f"Good sleep: {sleep_hours} hours")
     elif sleep_hours < 6.0:
-        factors.append(f"Restricted sleep ({sleep_hours}h)")
+        factors.append(f"Low sleep: {sleep_hours} hours")
 
     if resting_heart_rate <= 62:
-        factors.append(f"Low resting heart rate ({resting_heart_rate} bpm)")
+        factors.append(f"Low resting heart rate: {resting_heart_rate} bpm")
     elif resting_heart_rate >= 75:
-        factors.append(f"Elevated resting heart rate ({resting_heart_rate} bpm)")
+        factors.append(f"Elevated resting heart rate: {resting_heart_rate} bpm")
 
     if hrv_ms is not None:
         if hrv_ms >= 60.0:
-            factors.append(f"Strong parasympathetic HRV tone ({hrv_ms} ms)")
+            factors.append(f"Good HRV: {hrv_ms} ms")
         elif hrv_ms < 40.0:
-            factors.append(f"Depressed HRV ({hrv_ms} ms)")
+            factors.append(f"Low HRV: {hrv_ms} ms")
 
     if soreness <= 3:
-        factors.append(f"Minimal muscle soreness ({soreness}/10)")
+        factors.append(f"Low muscle soreness: {soreness}/10")
     elif soreness >= 7:
-        factors.append(f"High localized soreness ({soreness}/10)")
+        factors.append(f"High muscle soreness: {soreness}/10")
 
     if energy_level >= 7:
-        factors.append(f"High perceived energy ({energy_level}/10)")
+        factors.append(f"High energy: {energy_level}/10")
     elif energy_level <= 4:
-        factors.append(f"Low perceived energy ({energy_level}/10)")
+        factors.append(f"Low energy: {energy_level}/10")
 
     observed_count = sum(1 for v in input_dict.values() if not (isinstance(v, float) and np.isnan(v)))
     imputed_count = len(feature_cols) - observed_count
 
     headline = (
-        "Optimal Physiological Recovery" if score >= 75.0
-        else "Moderate Readiness & Load Tolerance" if score >= 50.0
-        else "High Fatigue — Active Rest Advised"
+        "Optimal Recovery" if score >= 75.0
+        else "Moderate Recovery" if score >= 50.0
+        else "Low Recovery — Rest Recommended"
     )
     summary = (
-        "Your biometric telemetry indicates excellent recovery capacity." if score >= 75.0
-        else "Your physiological indicators reflect moderate recovery with baseline readiness." if score >= 50.0
-        else "Elevated fatigue or soreness metrics suggest prioritizing active recovery and sleep."
+        "Your recovery indicators suggest your body is well-rested." if score >= 75.0
+        else "Your recovery indicators show moderate readiness for training." if score >= 50.0
+        else "Your recovery indicators show higher fatigue. Consider lighter training or active rest."
     )
 
     return {

@@ -31,6 +31,8 @@ def get_recovery_plan(
             db=db,
         )
         return RecoveryPlanResponse(**plan_dict)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -108,6 +110,8 @@ def predict_score(
             db=db,
         )
         return RecoveryScoreResponse(**prediction_dict)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -123,13 +127,50 @@ def list_checkins(
     db: Session = Depends(get_db),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    return (
+    checkins = (
         db.query(RecoveryCheckin)
         .filter(RecoveryCheckin.user_id == current_user.id)
         .order_by(RecoveryCheckin.created_at.desc())
         .limit(100)
         .all()
     )
+    if not checkins:
+        return []
+
+    # Attach prediction to latest check-in for instant consumption
+    results = []
+    for idx, c in enumerate(checkins):
+        pred_obj = None
+        if idx == 0:
+            try:
+                pred_dict = predict_recovery_for_checkin(
+                    user_id=current_user.id,
+                    sleep_hours=c.sleep_hours,
+                    resting_heart_rate=c.resting_heart_rate,
+                    hrv_ms=c.hrv_ms,
+                    soreness=c.soreness,
+                    energy_level=c.energy_level,
+                    db=db,
+                )
+                pred_obj = RecoveryScoreResponse(**pred_dict)
+            except Exception as e:
+                print("[list_checkins ML prediction error]", e)
+                pred_obj = None
+
+        results.append(
+            RecoveryCheckinResponse(
+                id=c.id,
+                user_id=c.user_id,
+                sleep_hours=c.sleep_hours,
+                resting_heart_rate=c.resting_heart_rate,
+                hrv_ms=c.hrv_ms,
+                soreness=c.soreness,
+                energy_level=c.energy_level,
+                created_at=c.created_at,
+                prediction=pred_obj,
+            )
+        )
+    return results
 
 
 @router.get(

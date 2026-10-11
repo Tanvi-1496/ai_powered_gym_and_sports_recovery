@@ -25,3 +25,20 @@ def test_settings_defaults():
     settings = Settings()
     assert settings.APP_NAME == "RecoverAI"
     assert settings.DATABASE_URL.startswith(("sqlite", "postgresql"))
+
+
+def test_supabase_url_inferred_from_database_url():
+    custom_settings = Settings(
+        DATABASE_URL="postgresql://postgres.myprojectref123:mypass@aws-0.pooler.supabase.com:5432/postgres",
+        SUPABASE_URL="",
+    )
+    assert custom_settings.SUPABASE_URL == "https://myprojectref123.supabase.co"
+
+
+def test_vite_aliases_supported():
+    custom_settings = Settings(
+        VITE_SUPABASE_URL="https://viteproject.supabase.co",
+        VITE_SUPABASE_ANON_KEY="vite-anon-key-12345",
+    )
+    assert custom_settings.SUPABASE_URL == "https://viteproject.supabase.co"
+    assert custom_settings.SUPABASE_ANON_KEY == "vite-anon-key-12345"

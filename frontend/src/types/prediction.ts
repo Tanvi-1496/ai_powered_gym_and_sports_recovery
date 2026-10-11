@@ -63,4 +63,14 @@ export interface ClinicalTriageGuidance {
   referralRecommended: boolean;
   disclaimer: string;
   status: "pending_service_integration" | "available" | "error";
+  triageLevel?: "standard_monitoring" | "prompt_medical_assessment" | "emergency" | string;
+  clinicalSummary?: string;
+  appliedRules?: Array<{
+    rule_id: string;
+    name: string;
+    clinical_citation?: string;
+    evidence_summary?: string;
+  }>;
+  restrictionCodes?: string[];
+  clinicalNotice?: string;
 }

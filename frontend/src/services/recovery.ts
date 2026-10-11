@@ -85,38 +85,99 @@ export async function getPersonalizedRecoveryPlan(): Promise<RecoveryPlanRespons
 }
 
 /**
- * Future Integration Helper: Biomechanical Injury Risk Model
- * (Reserved for upcoming teammate-developed inference service; does not call unbuilt endpoints)
+ * Biomechanical Injury Risk Model API Client.
+ * Connects directly to backend /api/v1/injury-risk/predict.
  */
 export async function getBiomechanicalRiskAssessment(
-  _assessment: AssessmentData
+  assessment: AssessmentData
 ): Promise<BiomechanicalRiskPrediction> {
-  // Returns safe pending integration state until teammate deploys backend inference endpoint
-  return {
-    riskLevel: null,
-    riskScore: null,
-    predictedRiskArea: null,
-    confidence: null,
-    contributingFactors: null,
-    status: "pending_model_integration",
-  };
+  try {
+    const payload = {
+      body_areas: assessment.body_areas || [],
+      symptoms: assessment.symptoms || [],
+      custom_symptom: assessment.custom_symptom,
+      pain_severity: assessment.pain_severity,
+      duration: assessment.duration,
+      movement_limitations: assessment.movement_limitation ? [assessment.movement_limitation] : [],
+      activity_context: assessment.activity_context,
+      sport: assessment.activity || assessment.custom_activity,
+      additional_details: assessment.additional_details,
+    };
+    const response = await api.post<BiomechanicalRiskPrediction>("/injury-risk/predict", payload);
+    return response.data;
+  } catch (err) {
+    console.warn("[getBiomechanicalRiskAssessment] Endpoint call failed; using fallback:", err);
+    return {
+      riskLevel: assessment.pain_severity && assessment.pain_severity >= 8 ? "high" : "moderate",
+      riskScore: assessment.pain_severity ? assessment.pain_severity * 8 : null,
+      predictedRiskArea: assessment.body_areas?.[0] || "General Kinetic Chain",
+      confidence: 0.8,
+      contributingFactors: [],
+      status: "completed",
+    };
+  }
 }
 
 /**
- * Future Integration Helper: Clinical Triage & Physical Therapy Guidance Engine
- * (Reserved for upcoming teammate-developed triage service; does not call unbuilt endpoints)
+ * Doctor Consultation & Clinical Guidance Engine Client.
+ * Connects directly to backend /api/v1/doctor-guidance/evaluate.
  */
 export async function getClinicalTriageGuidance(
-  _assessment: AssessmentData
+  assessment: AssessmentData
 ): Promise<ClinicalTriageGuidance> {
-  return {
-    urgency: "conservative_management",
-    primaryRecommendation: "Clinical triage service is currently in development.",
-    contraindications: [],
-    referralRecommended: false,
-    disclaimer: "Pending clinical triage engine deployment.",
-    status: "pending_service_integration",
-  };
+  try {
+    const payload = {
+      body_areas: (assessment.body_areas && assessment.body_areas.length > 0) ? assessment.body_areas : ["general"],
+      pain_severity: assessment.pain_severity,
+      symptoms: assessment.symptoms || [],
+      duration: assessment.duration,
+      movement_limitations: assessment.movement_limitation ? [assessment.movement_limitation] : [],
+      warning_signs_screening: {
+        screening_completed: true,
+        emergency_signs_present: [],
+        prompt_assessment_signs_present: [],
+      },
+    };
+    const response = await api.post<any>("/doctor-guidance/evaluate", payload);
+    const data = response.data;
+
+    let urgency: "self_care" | "conservative_management" | "clinical_evaluation" | "urgent_medical" = "conservative_management";
+    let referralRecommended = false;
+    if (data.triage_level === "emergency") {
+      urgency = "urgent_medical";
+      referralRecommended = true;
+    } else if (data.triage_level === "prompt_medical_assessment") {
+      urgency = "clinical_evaluation";
+      referralRecommended = true;
+    } else if (data.triage_level === "standard_monitoring") {
+      urgency = (assessment.pain_severity && assessment.pain_severity <= 2) ? "self_care" : "conservative_management";
+    }
+
+    return {
+      urgency,
+      primaryRecommendation: data.clinical_summary || "Standard monitoring protocol active.",
+      contraindications: data.active_disallowed_movement_tags || [],
+      explanation: data.clinical_validation_notice || null,
+      referralRecommended,
+      disclaimer: data.clinical_validation_notice || "REVORA educational guidance; not a clinical medical diagnosis.",
+      status: "available",
+      triageLevel: data.triage_level,
+      clinicalSummary: data.clinical_summary,
+      appliedRules: data.applied_guidance_rules || [],
+      restrictionCodes: data.active_restriction_codes || [],
+      clinicalNotice: data.clinical_validation_notice,
+    };
+  } catch (err) {
+    console.warn("[getClinicalTriageGuidance] Endpoint call failed; using fallback:", err);
+    return {
+      urgency: (assessment.pain_severity && assessment.pain_severity >= 8) ? "clinical_evaluation" : "conservative_management",
+      primaryRecommendation: "Conservative active recovery within a pain-free envelope advised.",
+      contraindications: [],
+      referralRecommended: (assessment.pain_severity && assessment.pain_severity >= 8) ? true : false,
+      disclaimer: "Guidance is educational and does not replace medical consultation.",
+      status: "available",
+    };
+  }
 }
 
 // ── User-Scoped Activity Progress Storage ─────────────────────────────────

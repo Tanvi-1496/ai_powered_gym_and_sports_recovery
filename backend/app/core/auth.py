@@ -51,11 +51,16 @@ def verify_supabase_token(token: str) -> Dict[str, Any]:
     if not settings.SUPABASE_JWT_SECRET and not settings.SUPABASE_URL:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication service configuration is missing.",
+            detail=(
+                "Authentication service configuration is missing. "
+                "Please ensure SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_JWT_SECRET) are configured."
+            ),
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    clean_token = token.strip()
+    clean_token = token.strip().strip('"').strip("'")
+    if clean_token.lower().startswith("bearer "):
+        clean_token = clean_token[7:].strip()
 
     # Step 1: Parse and validate JWT header structure
     try:
@@ -142,7 +147,7 @@ def verify_supabase_token(token: str) -> Dict[str, Any]:
                 elif res.status_code in (400, 401, 403):
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Invalid or expired Supabase token.",
+                        detail="Session expired or invalid token. Please log in again.",
                         headers={"WWW-Authenticate": "Bearer"},
                     )
                 else:
