@@ -1,0 +1,237 @@
+{
+  "dataset_rows": 80000,
+  "dataset_columns": 40,
+  "train_rows": 64000,
+  "test_rows": 16000,
+  "target": "triage_acuity",
+  "target_meaning": "Triage acuity classes 1-5; confirm exact definitions in dataset documentation. In common ESI-style ordering, 1 is most urgent and 5 least urgent.",
+  "excluded_columns": [
+    "patient_id",
+    "triage_nurse_id",
+    "disposition",
+    "ed_los_hours",
+    "triage_acuity"
+  ],
+  "feature_columns": [
+    "site_id",
+    "arrival_mode",
+    "arrival_hour",
+    "arrival_day",
+    "arrival_month",
+    "arrival_season",
+    "shift",
+    "age",
+    "age_group",
+    "sex",
+    "language",
+    "insurance_type",
+    "transport_origin",
+    "pain_location",
+    "mental_status_triage",
+    "chief_complaint_system",
+    "num_prior_ed_visits_12m",
+    "num_prior_admissions_12m",
+    "num_active_medications",
+    "num_comorbidities",
+    "systolic_bp",
+    "diastolic_bp",
+    "mean_arterial_pressure",
+    "pulse_pressure",
+    "heart_rate",
+    "respiratory_rate",
+    "temperature_c",
+    "spo2",
+    "gcs_total",
+    "pain_score",
+    "weight_kg",
+    "height_cm",
+    "bmi",
+    "shock_index",
+    "news2_score"
+  ],
+  "class_counts": {
+    "1": 3222,
+    "2": 13439,
+    "3": 28921,
+    "4": 23020,
+    "5": 11398
+  },
+  "best_model_by_macro_f1": "random_forest",
+  "metrics": {
+    "logistic_regression": {
+      "accuracy": 0.79125,
+      "balanced_accuracy": 0.8376526685846045,
+      "macro_f1": 0.8165748571265821,
+      "classification_report": {
+        "acuity_1": {
+          "precision": 0.8701117318435754,
+          "recall": 0.967391304347826,
+          "f1-score": 0.9161764705882353,
+          "support": 644.0
+        },
+        "acuity_2": {
+          "precision": 0.9635949943117179,
+          "recall": 0.9453125,
+          "f1-score": 0.9543661971830986,
+          "support": 2688.0
+        },
+        "acuity_3": {
+          "precision": 0.8795385779122542,
+          "recall": 0.8041147994467497,
+          "f1-score": 0.8401372832369942,
+          "support": 5784.0
+        },
+        "acuity_4": {
+          "precision": 0.6865116279069767,
+          "recall": 0.6411815812337098,
+          "f1-score": 0.6630727762803235,
+          "support": 4604.0
+        },
+        "acuity_5": {
+          "precision": 0.6188296829029094,
+          "recall": 0.8302631578947368,
+          "f1-score": 0.7091215583442593,
+          "support": 2280.0
+        },
+        "accuracy": 0.79125,
+        "macro avg": {
+          "precision": 0.8037173229754867,
+          "recall": 0.8376526685846045,
+          "f1-score": 0.8165748571265821,
+          "support": 16000.0
+        },
+        "weighted avg": {
+          "precision": 0.8005861029102496,
+          "recall": 0.79125,
+          "f1-score": 0.7927682653968304,
+          "support": 16000.0
+        }
+      },
+      "confusion_matrix_labels_1_to_5": [
+        [
+          623,
+          21,
+          0,
+          0,
+          0
+        ],
+        [
+          93,
+          2541,
+          54,
+          0,
+          0
+        ],
+        [
+          0,
+          75,
+          4651,
+          966,
+          92
+        ],
+        [
+          0,
+          0,
+          578,
+          2952,
+          1074
+        ],
+        [
+          0,
+          0,
+          5,
+          382,
+          1893
+        ]
+      ]
+    },
+    "random_forest": {
+      "accuracy": 0.83,
+      "balanced_accuracy": 0.8550070382905129,
+      "macro_f1": 0.8522014125910797,
+      "classification_report": {
+        "acuity_1": {
+          "precision": 0.9552,
+          "recall": 0.9270186335403726,
+          "f1-score": 0.9408983451536643,
+          "support": 644.0
+        },
+        "acuity_2": {
+          "precision": 0.9696629213483146,
+          "recall": 0.9631696428571429,
+          "f1-score": 0.9664053751399776,
+          "support": 2688.0
+        },
+        "acuity_3": {
+          "precision": 0.8737658674188998,
+          "recall": 0.8568464730290456,
+          "f1-score": 0.8652234636871509,
+          "support": 5784.0
+        },
+        "acuity_4": {
+          "precision": 0.738063063063063,
+          "recall": 0.7117723718505647,
+          "f1-score": 0.7246793454223794,
+          "support": 4604.0
+        },
+        "acuity_5": {
+          "precision": 0.7177015040493637,
+          "recall": 0.8162280701754386,
+          "f1-score": 0.7638005335522265,
+          "support": 2280.0
+        },
+        "accuracy": 0.83,
+        "macro avg": {
+          "precision": 0.8508786711759283,
+          "recall": 0.8550070382905129,
+          "f1-score": 0.8522014125910797,
+          "support": 16000.0
+        },
+        "weighted avg": {
+          "precision": 0.8318666425818798,
+          "recall": 0.83,
+          "f1-score": 0.8303736012153382,
+          "support": 16000.0
+        }
+      },
+      "confusion_matrix_labels_1_to_5": [
+        [
+          597,
+          47,
+          0,
+          0,
+          0
+        ],
+        [
+          28,
+          2589,
+          71,
+          0,
+          0
+        ],
+        [
+          0,
+          34,
+          4956,
+          763,
+          31
+        ],
+        [
+          0,
+          0,
+          626,
+          3277,
+          701
+        ],
+        [
+          0,
+          0,
+          19,
+          400,
+          1861
+        ]
+      ]
+    }
+  },
+  "warning": "Synthetic triage demonstration only. Not a sports-injury model or a real medical decision tool."
+}

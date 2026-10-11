@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import exercises, health, recovery
+from app.api.routes import exercises, health, recovery, triage
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -19,4 +19,11 @@ api_router.include_router(
     exercises.router,
     prefix="/exercises",
     tags=["Exercises"],
+)
+
+
+api_router.include_router(
+    triage.router,
+    prefix="/triage",
+    tags=["Triage Demo"],
 )
