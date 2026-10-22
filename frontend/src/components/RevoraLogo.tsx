@@ -1,5 +1,5 @@
+
 import React from "react";
-import revoraEmblem from "@/assets/revora-emblem.png";
 
 export interface RevoraLogoProps {
   className?: string;
@@ -29,34 +29,39 @@ export const RevoraLogo: React.FC<RevoraLogoProps> = ({
   const isLight = variant === "light-bg";
 
   return (
-    <div className={`flex items-center gap-2.5 sm:gap-3 select-none ${className}`}>
-      {/* Official Running-Athlete REVORA Emblem */}
-      <img
-        src={revoraEmblem}
-        alt="REVORA"
-        className={`${emblemSizes[size]} w-auto object-contain shrink-0 transition-transform duration-200 group-hover:scale-105`}
-        loading="eager"
-        decoding="async"
-      />
+    <div
+      className={`flex items-center gap-2.5 sm:gap-3 select-none ${className}`}
+    >
+      {/* REVORA emblem placeholder */}
+      <div
+        aria-label="REVORA emblem"
+        className={`${emblemSizes[size]} aspect-square shrink-0 rounded-full border-2 ${isLight ? "border-[#7C3AED]" : "border-[#FDBA8C]"
+          } flex items-center justify-center`}
+      >
+        <span
+          className={`font-black text-xs ${isLight ? "text-[#7C3AED]" : "text-[#FDBA8C]"
+            }`}
+        >
+          R
+        </span>
+      </div>
 
-      {/* Brand Typography */}
       {variant !== "icon-only" && (
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 leading-none">
             <span
-              className={`font-black tracking-tight font-display ${textSizes[size]} ${
-                isLight ? "text-[#0D0A1F]" : "text-[#FFFDF9]"
-              }`}
+              className={`font-black tracking-tight font-display ${textSizes[size]} ${isLight ? "text-[#0D0A1F]" : "text-[#FFFDF9]"
+                }`}
             >
               REVORA
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shadow-sm shadow-[#F97368]/50" />
           </div>
+
           {showTagline && (
             <span
-              className={`text-[10px] font-semibold tracking-widest uppercase mt-0.5 ${
-                isLight ? "text-[#7C3AED]" : "text-[#FDBA8C]/90"
-              }`}
+              className={`text-[10px] font-semibold tracking-widest uppercase mt-0.5 ${isLight ? "text-[#7C3AED]" : "text-[#FDBA8C]/90"
+                }`}
             >
               AI Sports Tech
             </span>
@@ -66,4 +71,3 @@ export const RevoraLogo: React.FC<RevoraLogoProps> = ({
     </div>
   );
 };
-
