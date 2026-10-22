@@ -26,16 +26,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# Media and 3D Assets
-*.glb
-*.gltf
-*.bin
-*.mp4
-*.webm
-*.avi
-*.mov
-*.png
-*.jpg
-*.jpeg
-*.gif
-public/models/
+# Exclude only the oversized anatomy model
+/public/models/revora-anatomy-working.glb
