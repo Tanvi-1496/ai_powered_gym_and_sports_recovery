@@ -452,11 +452,339 @@ export function searchAnatomy(rawQuery: string): AnatomyStructure[] {
   return results;
 }
 
+// ── Clean Anatomical Name Formatter Helper ────────────────────────────────
+export function formatAnatomyName(rawName: string): string {
+  if (!rawName) return "Anatomical Structure";
+  return rawName
+    .replace(/^mesh[_-]/i, "")
+    .replace(/[._-]l$/i, " (Left)")
+    .replace(/[._-]r$/i, " (Right)")
+    .replace(/_/g, " ")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function getSideFromName(name: string): AnatomySide {
+  const lower = name.toLowerCase();
+  if (lower.startsWith("left_") || lower.startsWith("left-") || lower.endsWith(".l") || lower.includes(" left ")) {
+    return "left";
+  }
+  if (lower.startsWith("right_") || lower.startsWith("right-") || lower.endsWith(".r") || lower.includes(" right ")) {
+    return "right";
+  }
+  return "center";
+}
+
 // ── Structure Lookup Helpers ─────────────────────────────────────────────
-export function getAnatomyForMesh(meshName: string): AnatomyStructure | null {
-  const part = partsByMeshName.get(meshName);
-  if (!part) return null;
-  return byId[part.id] || null;
+// Requirements:
+// 1. Select the exact intersected anatomical mesh.
+// 2. Do NOT automatically promote the selected mesh to a broad parent group.
+// 3. Where a name cannot be verified in the manifest, show an appropriate fallback rather than inventing an anatomical identity.
+export function getAnatomyForMesh(
+  meshName: string,
+  meshObj?: { userData?: Record<string, any>; name?: string }
+): AnatomyStructure | null {
+  if (!meshName) return null;
+
+  // 1. Exact match from pre-indexed manifest parts (guaranteed single-mesh structure)
+  const part = partsByMeshName.get(meshName) || partsById.get(meshName);
+  if (part && byId[part.id]) {
+    // Return individual structure part, never promote to parent group
+    return byId[part.id];
+  }
+
+  // 2. Direct byId lookup by mesh name or part id
+  if (byId[meshName]) {
+    return byId[meshName];
+  }
+
+  // 3. Fallback to mesh.userData if embedded in GLB extras
+  const userData = meshObj?.userData;
+  if (userData && (userData.displayName || userData.id)) {
+    const id = userData.id || meshName.toLowerCase().replace(/_/g, "-");
+    const name = userData.displayName || formatAnatomyName(meshName);
+    const layer = (userData.layer as ModelLayer) || "Muscles";
+    const side = (userData.side as AnatomySide) || getSideFromName(meshName);
+    const category = userData.category || "Muscle";
+    const region = userData.region || "spine-back";
+
+    const fallbackStruct: AnatomyStructure = {
+      id,
+      name,
+      type: "part",
+      category,
+      layer,
+      memberLayers: [layer],
+      side,
+      region,
+      group: userData.group || null,
+      aliases: [name.toLowerCase()],
+      meshNames: [meshName],
+      center: [0, 0.88, 0],
+      bbox: [
+        [-0.1, 0.5, -0.1],
+        [0.1, 1.2, 0.1],
+      ],
+      cameraTarget: [0, 0.88, 0],
+      cameraDistance: 0.55,
+      description: `Specific anatomical ${category.toLowerCase()} identified as ${name}.`,
+    };
+    byId[id] = fallbackStruct;
+    byId[meshName] = fallbackStruct;
+    return fallbackStruct;
+  }
+
+  // 4. Clean formatting fallback rather than inventing an anatomical identity
+  const cleanName = formatAnatomyName(meshName);
+  const side = getSideFromName(meshName);
+  const fallbackStruct: AnatomyStructure = {
+    id: meshName.toLowerCase().replace(/_/g, "-"),
+    name: cleanName,
+    type: "part",
+    category: "Structure",
+    layer: "Muscles",
+    memberLayers: ["Muscles"],
+    side,
+    region: "spine-back",
+    group: null,
+    aliases: [cleanName.toLowerCase()],
+    meshNames: [meshName],
+    center: [0, 0.88, 0],
+    bbox: [
+      [-0.1, 0.5, -0.1],
+      [0.1, 1.2, 0.1],
+    ],
+    cameraTarget: [0, 0.88, 0],
+    cameraDistance: 0.55,
+    description: `Anatomical structure: ${cleanName}.`,
+  };
+  byId[fallbackStruct.id] = fallbackStruct;
+  byId[meshName] = fallbackStruct;
+  return fallbackStruct;
+}
+
+// ── Related & Underlying Structures Helper ──────────────────────────────
+// Surfaces synergistic, adjacent, or deep muscles (e.g. underlying deep stabilizers under Latissimus Dorsi)
+export function getRelatedStructures(structure: AnatomyStructure): AnatomyStructure[] {
+  if (!structure) return [];
+
+  const siblings: AnatomyStructure[] = [];
+  const seenIds = new Set<string>([structure.id]);
+
+  // 1. Direct group siblings
+  if (structure.group) {
+    MANIFEST.parts.forEach((p) => {
+      if (p.group === structure.group && !seenIds.has(p.id)) {
+        const s = byId[p.id];
+        if (s) {
+          seenIds.add(p.id);
+          siblings.push(s);
+        }
+      }
+    });
+  }
+
+  // 2. Functional group membership siblings
+  const parentGroups = meshNameToGroups.get(structure.meshNames[0]) || [];
+  parentGroups.forEach((g) => {
+    g.members.forEach((m) => {
+      const p = partsByMeshName.get(m);
+      if (p && !seenIds.has(p.id)) {
+        const s = byId[p.id];
+        if (s) {
+          seenIds.add(p.id);
+          siblings.push(s);
+        }
+      }
+    });
+  });
+
+  // 3. Deep & adjacent back structures special mapping
+  // If Latissimus Dorsi is selected, surface underlying deep thoracic & lumbar stabilizers!
+  const nLower = structure.name.toLowerCase();
+  if (nLower.includes("latissimus")) {
+    const side = structure.side;
+    const deepCandidates = [
+      `${side}-longissimus-thoracis`,
+      `${side}-iliocostalis-lumborum`,
+      `${side}-multifidus-lumborum`,
+      `${side}-rhomboid-major`,
+      `${side}-serratus-posterior-inferior`,
+      `${side}-quadratus-lumborum`,
+    ];
+    deepCandidates.forEach((id) => {
+      const s = byId[id];
+      if (s && !seenIds.has(s.id)) {
+        seenIds.add(s.id);
+        siblings.push(s);
+      }
+    });
+  } else if (nLower.includes("trapezius")) {
+    const side = structure.side;
+    const deepCandidates = [
+      `${side}-rhomboid-major`,
+      `${side}-rhomboid-minor`,
+      `${side}-levator-scapulae`,
+      `${side}-splenius-capitis`,
+      `${side}-serratus-posterior-superior`,
+    ];
+    deepCandidates.forEach((id) => {
+      const s = byId[id];
+      if (s && !seenIds.has(s.id)) {
+        seenIds.add(s.id);
+        siblings.push(s);
+      }
+    });
+  }
+
+  // 4. Same region & side candidates (up to 5)
+  if (siblings.length < 4) {
+    for (const p of MANIFEST.parts) {
+      if (
+        siblings.length < 5 &&
+        p.region === structure.region &&
+        p.side === structure.side &&
+        p.layer === structure.layer &&
+        !seenIds.has(p.id)
+      ) {
+        const s = byId[p.id];
+        if (s) {
+          seenIds.add(p.id);
+          siblings.push(s);
+        }
+      }
+    }
+  }
+
+  return siblings.slice(0, 5);
+}
+
+// ── Clinical Guidance & Biomechanical Recovery Connection ────────────────
+export function getAnatomicalGuidanceInfo(structure: AnatomyStructure): {
+  action: string;
+  recoveryFocus: string;
+  protocolKey: string;
+  catalogTargetArea: string;
+} {
+  const name = structure.name.toLowerCase();
+  const region = structure.region || "";
+
+  if (
+    name.includes("latissimus") ||
+    name.includes("thoracis") ||
+    name.includes("lumborum") ||
+    name.includes("erector") ||
+    name.includes("multifidus") ||
+    name.includes("spinalis") ||
+    name.includes("quadratus lumborum") ||
+    region === "spine-back"
+  ) {
+    return {
+      action: "Trunk extension, intervertebral stabilization, lumbar anti-shear integrity, and scapulothoracic pulling.",
+      recoveryFocus: "Spinal decompression, core brace recruitment, and progressive posterior chain hinge loading.",
+      protocolKey: "lower_back",
+      catalogTargetArea: "lower_back",
+    };
+  }
+  if (
+    name.includes("trapezius") ||
+    name.includes("cervical") ||
+    name.includes("colli") ||
+    name.includes("scalene") ||
+    name.includes("levator scapulae") ||
+    region === "head-neck"
+  ) {
+    return {
+      action: "Cervical spine support, scapular elevation/upward rotation, postural load carriage.",
+      recoveryFocus: "Thoracic extension mobility, upper trapezius trigger-point down-regulation, and deep neck flexor setting.",
+      protocolKey: "neck",
+      catalogTargetArea: "neck",
+    };
+  }
+  if (
+    name.includes("rectus femoris") ||
+    name.includes("vastus") ||
+    name.includes("quadriceps") ||
+    name.includes("patell") ||
+    name.includes("cruciate") ||
+    name.includes("meniscus")
+  ) {
+    return {
+      action: "Knee extension, patellofemoral tracking, eccentric deceleration during landing and descent.",
+      recoveryFocus: "Patellar tendon isometric squats, terminal knee extension control, and VMO recruitment.",
+      protocolKey: "knee",
+      catalogTargetArea: "knee",
+    };
+  }
+  if (
+    name.includes("biceps femoris") ||
+    name.includes("semitendinosus") ||
+    name.includes("semimembranosus") ||
+    name.includes("hamstring")
+  ) {
+    return {
+      action: "Knee flexion, hip extension, high-speed terminal swing deceleration.",
+      recoveryFocus: "Progressive eccentric loading (Nordic/RDL), pelvic anterior tilt control, and hip hinge integrity.",
+      protocolKey: "hamstring",
+      catalogTargetArea: "hamstring",
+    };
+  }
+  if (
+    name.includes("rotator") ||
+    name.includes("supraspinatus") ||
+    name.includes("infraspinatus") ||
+    name.includes("subscapularis") ||
+    name.includes("deltoid") ||
+    name.includes("biceps brachii") ||
+    name.includes("triceps brachii") ||
+    region === "upper-limb"
+  ) {
+    return {
+      action: "Glenohumeral dynamic stabilization, humeral head centralization, overhead abduction/rotation.",
+      recoveryFocus: "Subacromial space preservation, isometric external rotation, and scapulohumeral rhythm.",
+      protocolKey: "shoulder",
+      catalogTargetArea: "shoulder",
+    };
+  }
+  if (
+    name.includes("gastrocnemius") ||
+    name.includes("soleus") ||
+    name.includes("achilles") ||
+    name.includes("calcaneal") ||
+    name.includes("tibialis") ||
+    name.includes("fibularis") ||
+    name.includes("ankle")
+  ) {
+    return {
+      action: "Ankle plantarflexion, eccentric shock absorption, elastic stretch-shortening propulsion.",
+      recoveryFocus: "Soleus heavy-slow resistance, isometric Achilles drops, and midfoot stability.",
+      protocolKey: "ankle",
+      catalogTargetArea: "ankle",
+    };
+  }
+  if (
+    name.includes("glute") ||
+    name.includes("piriformis") ||
+    name.includes("adductor") ||
+    name.includes("iliopsoas") ||
+    region === "pelvis"
+  ) {
+    return {
+      action: "Pelvic stabilization, hip extension/abduction, dynamic knee valgus collapse prevention.",
+      recoveryFocus: "Gluteus medius recruitment, pelvic leveling drills, and hip capsule mobility.",
+      protocolKey: "hip",
+      catalogTargetArea: "hip",
+    };
+  }
+
+  return {
+    action: `Biomechanical support and structural articulation within the ${region.replace("-", " ")} region.`,
+    recoveryFocus: "Gentle isometric activation, joint mobility maintenance, and graduated load tolerance.",
+    protocolKey: "general",
+    catalogTargetArea: "general",
+  };
 }
 
 export function getAnatomyLabel(idOrName: string): string {
@@ -470,14 +798,10 @@ export function getAnatomyLabel(idOrName: string): string {
     }
   }
 
-  const struct = byId[idOrName] || partsByMeshName.get(idOrName);
+  const struct = byId[idOrName] || partsByMeshName.get(idOrName) || partsById.get(idOrName);
   if (struct) return struct.name;
 
-  // Fallback: format snake_case or kebab-case
-  return idOrName
-    .replace(/_/g, " ")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return formatAnatomyName(idOrName);
 }
 
 export const ALL_ANATOMY_LABELS: Record<string, string> = {};

@@ -51,7 +51,28 @@ ANATOMY_MAPPING: dict[str, str] = {
 def normalize_body_area(area: str) -> str:
     """Normalize user or assessment input area to standardized catalog key."""
     cleaned = area.strip().lower().replace("-", "_")
-    return ANATOMY_MAPPING.get(cleaned, cleaned)
+
+    # 1. Exact match from predefined mapping
+    if cleaned in ANATOMY_MAPPING:
+        return ANATOMY_MAPPING[cleaned]
+
+    # 2. Match individual muscle/structure stems to clinical catalog target zones
+    if any(k in cleaned for k in ["latiss", "erect", "longiss", "multifid", "spinalis", "quadratus_lumborum", "serratus_posterior", "sacro", "lumb"]):
+        return "lower_back"
+    if any(k in cleaned for k in ["trapez", "splenius", "scalen", "levator_scapulae", "cervic", "colli"]):
+        return "neck"
+    if any(k in cleaned for k in ["quad", "rectus_femoris", "vastus", "patell", "cruciate", "menisc"]):
+        return "knee"
+    if any(k in cleaned for k in ["hamstring", "biceps_femoris", "semitendin", "semimembran"]):
+        return "hamstring"
+    if any(k in cleaned for k in ["rotator", "infraspin", "supraspin", "subscap", "teres", "deltoid", "bicep", "tricep", "brachi", "pectoral"]):
+        return "shoulder"
+    if any(k in cleaned for k in ["achilles", "calcaneal", "gastrocnem", "soleus", "tibial", "fibular", "ankle", "plantar"]):
+        return "ankle"
+    if any(k in cleaned for k in ["glute", "piriform", "adductor", "iliopsoas", "obturat", "gemell", "hip", "pelvi"]):
+        return "hip"
+
+    return cleaned
 
 
 def load_catalog(force_reload: bool = False) -> list[dict[str, Any]]:
