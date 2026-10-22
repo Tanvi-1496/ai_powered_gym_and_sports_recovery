@@ -67,11 +67,14 @@ export const BodyMapStep: React.FC<BodyMapStepProps> = ({
     }
   };
 
-  const handleAddManualArea = (description: string) => {
+  const handleAddManualArea = (description: string, additionalAreas?: string[]) => {
     const cleanText = description.trim();
     if (!cleanText) return;
-    if (!confirmedAreas.includes(cleanText)) {
-      updateFormData({ body_areas: [...confirmedAreas, cleanText] });
+    const newItems = [cleanText, ...(additionalAreas || [])].filter(
+      (item) => item && !confirmedAreas.includes(item)
+    );
+    if (newItems.length > 0) {
+      updateFormData({ body_areas: [...confirmedAreas, ...newItems] });
     }
   };
 

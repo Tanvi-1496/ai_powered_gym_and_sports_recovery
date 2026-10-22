@@ -52,6 +52,16 @@ class Settings(BaseSettings):
     )
     ENVIRONMENT: str = "development"
 
+    # Google Gemini API configuration
+    GEMINI_API_KEY: str = Field(
+        default="",
+        validation_alias=AliasChoices("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+    )
+    GEMINI_MODEL: str = Field(
+        default="gemini-flash-latest",
+        validation_alias=AliasChoices("GEMINI_MODEL", "GOOGLE_MODEL"),
+    )
+
     @model_validator(mode="after")
     def infer_supabase_settings(self) -> "Settings":
         """If SUPABASE_URL is not explicitly specified, infer it from Supabase DATABASE_URL."""

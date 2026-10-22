@@ -90,7 +90,22 @@ def evaluate_biomechanical_risk(
         symptoms.append(assessment.custom_symptom)
 
     # 1. Identify primary anatomical strain region
-    primary_area = body_areas[0].replace("_", " ").title() if body_areas else "General Kinetic Chain"
+    primary_area = "General Kinetic Chain"
+    if body_areas:
+        first_area = str(body_areas[0]).strip()
+        if first_area.lower().startswith("custom:"):
+            try:
+                from app.services.symptom_interpreter import interpret_symptom
+                from app.schemas.symptoms import SymptomInterpretationRequest
+                interp = interpret_symptom(SymptomInterpretationRequest(text=first_area[7:].strip()))
+                if interp.primary_body_area and interp.primary_body_area != "general":
+                    primary_area = interp.primary_body_area.replace("_", " ").title()
+                else:
+                    primary_area = first_area[7:].strip().replace("_", " ").title()
+            except Exception:
+                primary_area = first_area[7:].strip().replace("_", " ").title()
+        else:
+            primary_area = first_area.replace("_", " ").title()
 
     # 2. Extract legitimate contributing biomechanical factors from athlete submission
     factors: List[ContributingFactor] = []

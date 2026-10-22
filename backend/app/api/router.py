@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.routes import health, recovery, exercises, guidance, injury_risk
+from app.api.routes import health, recovery, exercises, guidance, injury_risk, symptoms
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -32,3 +32,9 @@ api_router.include_router(
     prefix="/injury-risk",
     tags=["Injury Risk Prediction"],
 )
+
+api_router.include_router(
+    symptoms.router,
+    prefix="/symptoms",
+    tags=["Symptom Interpretation"],
+)

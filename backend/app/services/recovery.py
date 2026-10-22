@@ -26,15 +26,28 @@ def get_anatomy_category(body_areas: List[str]) -> str:
 
     joined = " ".join([str(a).lower() for a in body_areas])
 
-    if any(k in joined for k in ["knee", "patella", "quad", "hamstring", "thigh"]):
+    # If athlete provided custom free-text body areas, resolve canonical zones via interpreter
+    custom_areas = [str(a)[7:].strip() for a in body_areas if str(a).lower().startswith("custom:")]
+    if custom_areas:
+        try:
+            from app.services.symptom_interpreter import interpret_symptom
+            from app.schemas.symptoms import SymptomInterpretationRequest
+            for ca in custom_areas:
+                interp = interpret_symptom(SymptomInterpretationRequest(text=ca))
+                for cba in interp.canonical_body_areas:
+                    joined += f" {cba}"
+        except Exception:
+            pass
+
+    if any(k in joined for k in ["knee", "patella", "quad", "hamstring", "thigh", "femoris", "vastus", "gracilis", "sartorius", "cruciate", "meniscus"]):
         return "knee_thigh"
-    elif any(k in joined for k in ["ankle", "foot", "calf", "achilles", "shin"]):
+    elif any(k in joined for k in ["ankle", "foot", "calf", "achilles", "shin", "gastrocnem", "soleus", "tibialis", "peroneus", "fibularis", "plantar"]):
         return "lower_leg_ankle"
-    elif any(k in joined for k in ["back", "lumbar", "spine", "glute", "hip", "pelvis"]):
+    elif any(k in joined for k in ["back", "lumbar", "spine", "glute", "hip", "pelvis", "latiss", "longiss", "iliocost", "multifid", "spinalis", "quadratus_lumborum", "erector", "sacroiliac", "piriformis"]):
         return "lumbar_hip"
-    elif any(k in joined for k in ["shoulder", "rotator", "deltoid", "bicep", "tricep", "arm", "scapula"]):
+    elif any(k in joined for k in ["shoulder", "rotator", "deltoid", "bicep", "tricep", "arm", "scapula", "infraspin", "supraspin", "subscap", "teres", "pectoral", "brachii", "brachialis"]):
         return "shoulder_arm"
-    elif any(k in joined for k in ["neck", "cervical", "trapezius", "upper_back"]):
+    elif any(k in joined for k in ["neck", "cervical", "trapezius", "upper_back", "rhomboid", "levator", "sternocleidomastoid", "splenius"]):
         return "neck_upper_back"
     else:
         return "kinetic_chain"
