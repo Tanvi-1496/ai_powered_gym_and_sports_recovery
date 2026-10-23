@@ -27,4 +27,7 @@ dist-ssr
 *.sw?
 
 # Exclude only the oversized anatomy model
+public/models/revora-anatomy-working.glb
 /public/models/revora-anatomy-working.glb
+.vercel
+.env*
