@@ -123,7 +123,8 @@ export async function getBiomechanicalRiskAssessment(
  * Connects directly to backend /api/v1/doctor-guidance/evaluate.
  */
 export async function getClinicalTriageGuidance(
-  assessment: AssessmentData
+  assessment: AssessmentData,
+  clearanceSubmission?: any
 ): Promise<ClinicalTriageGuidance> {
   try {
     const payload = {
@@ -137,6 +138,7 @@ export async function getClinicalTriageGuidance(
         emergency_signs_present: [],
         prompt_assessment_signs_present: [],
       },
+      clearance_submission: clearanceSubmission || null,
     };
     const response = await api.post<any>("/doctor-guidance/evaluate", payload);
     const data = response.data;
@@ -166,6 +168,7 @@ export async function getClinicalTriageGuidance(
       appliedRules: data.applied_guidance_rules || [],
       restrictionCodes: data.active_restriction_codes || [],
       clinicalNotice: data.clinical_validation_notice,
+      clearanceValidation: data.clearance_validation || null,
     };
   } catch (err) {
     console.warn("[getClinicalTriageGuidance] Endpoint call failed; using fallback:", err);

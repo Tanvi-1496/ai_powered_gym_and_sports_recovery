@@ -73,4 +73,12 @@ export interface ClinicalTriageGuidance {
   }>;
   restrictionCodes?: string[];
   clinicalNotice?: string;
+  clearanceValidation?: {
+    is_valid: boolean;
+    verification_status: string;
+    clinician_clearance_granted: boolean;
+    medical_clearance_required: boolean;
+    rejection_reasons?: string[];
+    clearance_summary?: string;
+  };
 }

@@ -167,25 +167,25 @@ def predict_recovery_for_checkin(
     db: Session,
 ) -> Dict[str, Any]:
     """Run ML ExtraTrees inference and return recovery score with structured breakdown."""
-    model = get_model()
-    feature_cols = get_feature_columns()
+    try:
+        model = get_model()
+        feature_cols = get_feature_columns()
+        input_dict = compute_derived_features(
+            user_id=user_id,
+            sleep_hours=sleep_hours,
+            resting_heart_rate=resting_heart_rate,
+            hrv_ms=hrv_ms,
+            soreness=soreness,
+            energy_level=energy_level,
+            db=db,
+        )
+        df_input = pd.DataFrame([input_dict])[feature_cols]
+        raw_pred = model.predict(df_input)[0]
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        raise
 
-    # Build input with legitimate data + rolling averages
-    input_dict = compute_derived_features(
-        user_id=user_id,
-        sleep_hours=sleep_hours,
-        resting_heart_rate=resting_heart_rate,
-        hrv_ms=hrv_ms,
-        soreness=soreness,
-        energy_level=energy_level,
-        db=db,
-    )
-
-    # Convert to DataFrame ensuring column order
-    df_input = pd.DataFrame([input_dict])[feature_cols]
-
-    # Predict continuous recovery score
-    raw_pred = model.predict(df_input)[0]
     score = round(float(np.clip(raw_pred, 0.0, 100.0)), 1)
     tier = get_score_tier(score)
 

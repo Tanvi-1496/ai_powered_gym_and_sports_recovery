@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   Stethoscope,
   Layers,
@@ -62,6 +63,62 @@ export const AssessmentResultsPage: React.FC = () => {
   // Clinical Guidance & Triage State
   const [clinicalGuidance, setClinicalGuidance] = useState<ClinicalTriageGuidance | null>(null);
   const [guidanceLoading, setGuidanceLoading] = useState<boolean>(false);
+
+  // Clinician Clearance Submission State (Module 2 Integration)
+  const [showClearanceForm, setShowClearanceForm] = useState<boolean>(false);
+  const [clearanceData, setClearanceData] = useState({
+    clinicianName: "",
+    clinicianRole: "sports_physician",
+    licenseNumber: "",
+    jurisdiction: "",
+    evaluationDate: new Date().toISOString().split("T")[0],
+    declarationSigned: false,
+  });
+  const [clearanceSubmitting, setClearanceSubmitting] = useState<boolean>(false);
+  const [clearanceError, setClearanceError] = useState<string | null>(null);
+  const [clearanceSuccess, setClearanceSuccess] = useState<string | null>(null);
+
+  const handleClearanceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assessment) return;
+    if (!clearanceData.clinicianName.trim() || !clearanceData.licenseNumber.trim() || !clearanceData.jurisdiction.trim()) {
+      setClearanceError("Please complete all clinician credential fields (Name, License #, Jurisdiction).");
+      return;
+    }
+    if (!clearanceData.declarationSigned) {
+      setClearanceError("Medical evaluation declaration must be confirmed.");
+      return;
+    }
+    try {
+      setClearanceSubmitting(true);
+      setClearanceError(null);
+      const submission = {
+        attestation_type: "direct_clinician_entry",
+        clinician_name: clearanceData.clinicianName.trim(),
+        clinician_role: clearanceData.clinicianRole,
+        license_number: clearanceData.licenseNumber.trim(),
+        licensing_jurisdiction: clearanceData.jurisdiction.trim().toUpperCase(),
+        evaluation_date: clearanceData.evaluationDate,
+        clinician_declaration_signed: true,
+        clearance_scope: "conservative_rehab_only",
+      };
+      const res = await getClinicalTriageGuidance(assessment, submission);
+      setClinicalGuidance(res);
+      if (res.clearanceValidation?.is_valid) {
+        setClearanceSuccess(
+          `Clearance verified: Dr. ${clearanceData.clinicianName} (${clearanceData.licenseNumber}). Conservative exercises unlocked.`
+        );
+        setShowClearanceForm(false);
+      } else {
+        const reasons = res.clearanceValidation?.rejection_reasons?.join("; ") || "Clearance verification failed.";
+        setClearanceError(reasons);
+      }
+    } catch (err: any) {
+      setClearanceError(err?.message || "Failed to submit clinician clearance.");
+    } finally {
+      setClearanceSubmitting(false);
+    }
+  };
 
   // How It Works Accordion
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState<boolean>(false);
@@ -878,6 +935,181 @@ export const AssessmentResultsPage: React.FC = () => {
                       </div>
                     </div>
                   )}
+
+                  {/* Clinician Clearance Status & Entry Form (Module 2 ↔ Module 3 Integration) */}
+                  <div className="pt-2 border-t border-[#7C3AED]/20 space-y-3">
+                    {clearanceSuccess ? (
+                      <div className="p-3.5 rounded-2xl bg-[#10B981]/15 border border-[#10B981]/35 flex items-start gap-2.5 text-[#A7F3D0]">
+                        <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-[#10B981]" />
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-bold uppercase tracking-wider block text-[#10B981]">
+                            Clinician Clearance Verified
+                          </span>
+                          <p className="text-xs text-[#FFFDF9]/95 leading-relaxed">
+                            {clearanceSuccess}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowClearanceForm(!showClearanceForm);
+                            setClearanceError(null);
+                          }}
+                          className="w-full py-2.5 px-3.5 rounded-xl bg-[#21183A]/80 hover:bg-[#21183A] border border-[#7C3AED]/30 hover:border-[#10B981]/50 text-xs font-semibold text-[#FFFDF9] flex items-center justify-between transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2 text-left">
+                            <Stethoscope className="w-3.5 h-3.5 text-[#10B981]" />
+                            <span>Under doctor or physical therapist care? Submit Clearance</span>
+                          </div>
+                          {showClearanceForm ? (
+                            <ChevronUp className="w-4 h-4 text-[#B8AEC8]" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-[#B8AEC8]" />
+                          )}
+                        </button>
+
+                        {showClearanceForm && (
+                          <form
+                            onSubmit={handleClearanceSubmit}
+                            className="p-4 rounded-2xl bg-[#120D26]/90 border border-[#7C3AED]/30 space-y-3 animate-fade-in"
+                          >
+                            <div className="space-y-1">
+                              <h3 className="text-xs font-bold uppercase tracking-wider text-[#FDBA8C] flex items-center gap-1.5">
+                                <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
+                                Clinician Clearance Verification
+                              </h3>
+                              <p className="text-[11px] text-[#B8AEC8] leading-tight">
+                                Authorized clearance from a licensed provider allows safe, conservative drills even with elevated soreness.
+                              </p>
+                            </div>
+
+                            {clearanceError && (
+                              <div className="p-2.5 rounded-xl bg-[#EF4444]/15 border border-[#EF4444]/30 text-xs text-[#FCA5A5] flex items-start gap-2">
+                                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                <span>{clearanceError}</span>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                                  Evaluating Clinician Name
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. Dr. Jane Smith"
+                                  value={clearanceData.clinicianName}
+                                  onChange={(e) =>
+                                    setClearanceData({ ...clearanceData, clinicianName: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl bg-[#21183A] border border-[#7C3AED]/30 text-xs text-[#FFFDF9] placeholder-[#B8AEC8]/50 focus:outline-none focus:border-[#10B981]"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                                  Provider Role
+                                </label>
+                                <select
+                                  value={clearanceData.clinicianRole}
+                                  onChange={(e) =>
+                                    setClearanceData({ ...clearanceData, clinicianRole: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl bg-[#21183A] border border-[#7C3AED]/30 text-xs text-[#FFFDF9] focus:outline-none focus:border-[#10B981]"
+                                >
+                                  <option value="sports_physician">Sports Physician</option>
+                                  <option value="physical_therapist">Physical Therapist (PT)</option>
+                                  <option value="orthopedic_surgeon">Orthopedic Surgeon</option>
+                                  <option value="athletic_trainer">Certified Athletic Trainer</option>
+                                  <option value="physiatrist">Physiatrist (PM&R)</option>
+                                  <option value="general_practitioner">General Practitioner (MD/DO)</option>
+                                </select>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                                  License / Registration #
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. PT-94821 or MD-38491"
+                                  value={clearanceData.licenseNumber}
+                                  onChange={(e) =>
+                                    setClearanceData({ ...clearanceData, licenseNumber: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl bg-[#21183A] border border-[#7C3AED]/30 text-xs text-[#FFFDF9] placeholder-[#B8AEC8]/50 focus:outline-none focus:border-[#10B981]"
+                                />
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                                  Licensing Jurisdiction
+                                </label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. CA, NY, MH, UK"
+                                  value={clearanceData.jurisdiction}
+                                  onChange={(e) =>
+                                    setClearanceData({ ...clearanceData, jurisdiction: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl bg-[#21183A] border border-[#7C3AED]/30 text-xs text-[#FFFDF9] placeholder-[#B8AEC8]/50 focus:outline-none focus:border-[#10B981]"
+                                />
+                              </div>
+
+                              <div className="space-y-1 sm:col-span-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-[#B8AEC8] block">
+                                  Evaluation Date (valid &le; 60 days)
+                                </label>
+                                <input
+                                  type="date"
+                                  value={clearanceData.evaluationDate}
+                                  max={new Date().toISOString().split("T")[0]}
+                                  onChange={(e) =>
+                                    setClearanceData({ ...clearanceData, evaluationDate: e.target.value })
+                                  }
+                                  className="w-full px-3 py-2 rounded-xl bg-[#21183A] border border-[#7C3AED]/30 text-xs text-[#FFFDF9] focus:outline-none focus:border-[#10B981]"
+                                />
+                              </div>
+                            </div>
+
+                            <label className="flex items-start gap-2 pt-1 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={clearanceData.declarationSigned}
+                                onChange={(e) =>
+                                  setClearanceData({ ...clearanceData, declarationSigned: e.target.checked })
+                                }
+                                className="mt-0.5 rounded border-[#7C3AED]/40 text-[#10B981] focus:ring-0"
+                              />
+                              <span className="text-[11px] text-[#B8AEC8] leading-tight">
+                                I confirm this evaluation was completed in-person/telehealth by a licensed medical provider and conservative physical rehab has been clinically approved.
+                              </span>
+                            </label>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#7C3AED]/15">
+                              <button
+                                type="button"
+                                onClick={() => setShowClearanceForm(false)}
+                                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-[#B8AEC8] hover:text-[#FFFDF9] transition-colors cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={clearanceSubmitting}
+                                className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#10B981] to-[#059669] text-xs font-bold text-white shadow hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+                              >
+                                {clearanceSubmitting ? "Verifying..." : "Verify Clearance"}
+                              </button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : null}
 
