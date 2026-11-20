@@ -47,6 +47,10 @@ class RecoveryActivitySchema(BaseModel):
     difficulty: str
     completed: bool = False
     safetyNote: Optional[str] = None
+    reviewStatus: Optional[str] = None
+    clinicalEvidence: Optional[str] = None
+    verifiedSources: Optional[List[str]] = None
+    sourceUrls: Optional[List[str]] = None
 
 
 class RecoveryPhaseSchema(BaseModel):
@@ -76,3 +80,7 @@ class RecoveryPlanResponse(BaseModel):
     recoveryScore: Optional[float] = None
     readinessTier: Optional[str] = None
     disclaimer: str
+    triageLevel: Optional[str] = None
+    safetySummary: Optional[str] = None
+    appliedGuidanceRules: Optional[List[dict[str, Any]]] = None
+    activeRestrictions: Optional[List[str]] = None

@@ -33,6 +33,11 @@ import {
 import { getAnatomyLabel } from "@/data/anatomyManifest";
 import { ALL_BODY_REGIONS } from "@/features/assessment/BodyMapStep";
 import { RecoveryActivitiesList } from "@/components/recovery/RecoveryActivitiesList";
+import {
+  formatRestrictionCode,
+  simplifyExerciseBenefit,
+  simplifySafetyNote,
+} from "@/utils/textSimplifier";
 
 export const RecoveryPlanPage: React.FC = () => {
   const navigate = useNavigate();
@@ -240,14 +245,24 @@ export const RecoveryPlanPage: React.FC = () => {
           </div>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <GradientButton
-              type="button"
-              onClick={fetchPlan}
-              className="w-full sm:w-auto px-7 py-3 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Retry Loading Plan</span>
-            </GradientButton>
+            {planError.toLowerCase().includes("session") || planError.toLowerCase().includes("log in") ? (
+              <GradientButton
+                type="button"
+                onClick={() => navigate("/login")}
+                className="w-full sm:w-auto px-7 py-3 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Sign In Again</span>
+              </GradientButton>
+            ) : (
+              <GradientButton
+                type="button"
+                onClick={fetchPlan}
+                className="w-full sm:w-auto px-7 py-3 text-sm font-bold flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Retry Loading Plan</span>
+              </GradientButton>
+            )}
 
             <GradientButton
               type="button"
@@ -320,7 +335,7 @@ export const RecoveryPlanPage: React.FC = () => {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/40 text-xs font-bold uppercase tracking-wider text-[#FDBA8C]">
               <Sparkles className="w-3.5 h-3.5 text-[#F97368]" />
-              <span>YOUR RECOVERY JOURNEY</span>
+              <span>YOUR RECOVERY PLAN</span>
             </div>
 
             {/* Plan Status Badge (Only shown if data supports it) */}
@@ -345,9 +360,44 @@ export const RecoveryPlanPage: React.FC = () => {
             Your Recovery Plan
           </h1>
           <p className="text-sm sm:text-base text-[#B8AEC8]">
-            Track your recovery activities and monitor your progress.
+            Follow your exercises, track your progress, and support your recovery.
           </p>
         </section>
+
+        {/* ── SAFETY / CLINICAL NOTICE BANNER ── */}
+        {plan?.triageLevel && plan.triageLevel !== "standard_monitoring" && (
+          <div
+            className={`p-4 sm:p-5 rounded-2xl border flex items-start gap-3 shadow-xl ${
+              plan.triageLevel === "emergency"
+                ? "bg-[#EF4444]/20 border-[#EF4444]/45 text-[#FCA5A5]"
+                : "bg-[#F59E0B]/20 border-[#F59E0B]/45 text-[#FDE68A]"
+            }`}
+          >
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h3 className="text-xs font-black uppercase tracking-wider">
+                {plan.triageLevel === "emergency"
+                  ? "Important Safety Notice: Immediate Medical Attention Recommended"
+                  : "Important Notice: Medical Evaluation Recommended"}
+              </h3>
+              <p className="text-xs text-[#FFFDF9]/90 leading-relaxed">
+                {plan.triageLevel === "emergency"
+                  ? "Your reported symptoms indicate you should pause exercising and see a healthcare provider right away."
+                  : (plan.safetySummary || "Having a doctor or physical therapist check your condition is recommended before continuing training.")}
+              </p>
+              {plan.activeRestrictions && plan.activeRestrictions.length > 0 && (
+                <div className="pt-1 flex flex-wrap gap-1.5 items-center">
+                  <span className="text-[10px] font-bold uppercase text-[#B8AEC8]">Movement Tips:</span>
+                  {plan.activeRestrictions.map((r) => (
+                    <span key={r} className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#120D26] text-[#FDBA8C] border border-[#FDBA8C]/25">
+                      {formatRestrictionCode(r)}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ── SECTION 2 — PLAN OVERVIEW CARD (FULL WIDTH) ───────────── */}
         <section
@@ -373,10 +423,10 @@ export const RecoveryPlanPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {/* Assessed body area or concern */}
+            {/* Target Area */}
             <div>
               <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Assessed Body Area / Concern
+                Target Area
               </span>
               <p className="text-sm font-bold text-[#FFFDF9] mt-0.5 truncate" title={formattedBodyAreas}>
                 {formattedBodyAreas}
@@ -396,20 +446,20 @@ export const RecoveryPlanPage: React.FC = () => {
             {/* Plan status */}
             <div>
               <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Plan Status
+                Status
               </span>
               <p className="text-sm font-bold text-[#10B981] capitalize mt-0.5">
                 {plan?.status || "Active"}
               </p>
             </div>
 
-            {/* Total activities returned by backend */}
+            {/* Total exercises returned */}
             <div>
               <span className="text-[10px] font-bold uppercase text-[#B8AEC8] tracking-wider block">
-                Total Activities
+                Total Exercises
               </span>
               <p className="text-sm font-bold text-[#FDBA8C] font-mono mt-0.5">
-                {totalActivitiesCount} {totalActivitiesCount === 1 ? "Activity" : "Activities"}
+                {totalActivitiesCount} {totalActivitiesCount === 1 ? "Exercise" : "Exercises"}
               </p>
             </div>
           </div>
@@ -442,7 +492,7 @@ export const RecoveryPlanPage: React.FC = () => {
 
           {activePhaseData ? (
             <div className="space-y-2">
-              {/* Strongest text element: Phase Title */}
+              {/* Phase Title */}
               <h2
                 id="current-phase-heading"
                 className="text-2xl sm:text-3xl font-black font-display text-[#FFFDF9] tracking-tight"
@@ -453,7 +503,9 @@ export const RecoveryPlanPage: React.FC = () => {
 
               {/* Phase description */}
               <p className="text-sm sm:text-base text-[#B8AEC8] leading-relaxed max-w-2xl">
-                {activePhaseData.summary || activePhaseData.name || "Follow the prescribed exercises and monitor movement comfort."}
+                {activePhaseData.summary
+                  ? simplifyExerciseBenefit(activePhaseData.summary)
+                  : "Follow the prescribed exercises and monitor movement comfort."}
               </p>
             </div>
           ) : (
@@ -487,7 +539,7 @@ export const RecoveryPlanPage: React.FC = () => {
           )}
         </section>
 
-        {/* ── SECTION 4 — ACTIVITY PROGRESS CARD ────────────────────── */}
+        {/* ── SECTION 4 — EXERCISE PROGRESS CARD ────────────────────── */}
         <section
           className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 shadow-lg space-y-4"
           aria-labelledby="activity-progress-heading"
@@ -499,7 +551,7 @@ export const RecoveryPlanPage: React.FC = () => {
                 id="activity-progress-heading"
                 className="text-sm font-bold uppercase tracking-wider text-[#FDBA8C] font-display"
               >
-                Activity Progress
+                Exercise Progress
               </h2>
             </div>
             <span className="text-xs font-mono font-bold text-[#FFFDF9]">
@@ -521,7 +573,7 @@ export const RecoveryPlanPage: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between text-xs text-[#B8AEC8]">
-              <span>Overall Plan Completion</span>
+              <span>Overall Plan Progress</span>
               <span className="font-mono font-bold text-[#FDBA8C]">
                 {completionPercentage}%
               </span>
@@ -537,12 +589,12 @@ export const RecoveryPlanPage: React.FC = () => {
           error={planError}
           onRetry={fetchPlan}
           title="Your Recommended Exercises"
-          description="Review your available exercises, follow the supplied instructions, and track your activity completion."
+          description="Perform each exercise slowly and within your comfort level. Tap 'Mark Complete' as you finish."
         />
 
-        {/* ── SECTION 6 — SAFETY INFORMATION CARD (FULL WIDTH) ──────── */}
+        {/* ── SECTION 6 — IMPORTANT SAFETY TIPS & RECOVERY GUIDANCE ──── */}
         <section
-          className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 shadow-lg space-y-3"
+          className="p-6 rounded-2xl bg-[#18132D] border border-[#7C3AED]/25 shadow-lg space-y-4"
           aria-labelledby="safety-info-heading"
         >
           <div className="flex items-center gap-2 pb-2 border-b border-[#7C3AED]/15">
@@ -551,28 +603,59 @@ export const RecoveryPlanPage: React.FC = () => {
               id="safety-info-heading"
               className="text-sm font-bold uppercase tracking-wider text-[#FDBA8C] font-display"
             >
-              Safety Information
+              Important Safety Tips
             </h2>
           </div>
 
-          {plan?.safetyGuidelines && plan.safetyGuidelines.length > 0 ? (
-            <ul className="space-y-2 text-xs sm:text-sm text-[#E9E2F5]/90 pl-1 leading-relaxed">
-              {plan.safetyGuidelines.map((guideline, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shrink-0 mt-1.5" />
-                  <span>{guideline}</span>
-                </li>
-              ))}
+          {/* General Recovery Guidance */}
+          <ul className="space-y-2.5 text-xs sm:text-sm text-[#E9E2F5]/90 pl-1 leading-relaxed">
+            <li className="flex items-start gap-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shrink-0 mt-1.5" />
+              <span>Stop or make the movement easier if pain goes above 2/10.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shrink-0 mt-1.5" />
+              <span>Move at a smooth, steady pace without rushing or bouncing.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shrink-0 mt-1.5" />
+              <span>Drink plenty of water (around 2.5–3 liters daily) and aim for 7.5–9 hours of sleep to support recovery naturally.</span>
+            </li>
+            {plan?.safetyGuidelines &&
+              plan.safetyGuidelines.map((guideline, idx) => {
+                const simplified = simplifySafetyNote(guideline);
+                if (
+                  simplified.includes("2/10") ||
+                  simplified.includes("hydration") ||
+                  simplified.includes("water") ||
+                  simplified.includes("sleep")
+                ) {
+                  return null;
+                }
+                return (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#F97368] shrink-0 mt-1.5" />
+                    <span>{simplified}</span>
+                  </li>
+                );
+              })}
+          </ul>
+
+          {/* When to Get Medical Help Callout */}
+          <div className="p-3.5 rounded-xl bg-[#FF6B6B]/10 border border-[#FF6B6B]/25 space-y-1.5 mt-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#FF6B6B] flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>When to Get Medical Help</span>
+            </span>
+            <ul className="text-xs text-[#E9E2F5]/90 space-y-1 pl-4 list-disc leading-relaxed">
+              <li>
+                Seek immediate medical care if you experience severe sudden pain, inability to bear weight or walk, joint instability, numbness, or major swelling.
+              </li>
+              <li>
+                Stop exercising and talk to a doctor or physical therapist if pain worsens or does not improve after a few days.
+              </li>
             </ul>
-          ) : plan?.disclaimer ? (
-            <p className="text-xs sm:text-sm text-[#B8AEC8] leading-relaxed">
-              {plan.disclaimer}
-            </p>
-          ) : (
-            <p className="text-xs text-[#B8AEC8] italic">
-              No plan-specific safety notes are available.
-            </p>
-          )}
+          </div>
         </section>
 
         {/* ── SECTION 7 — BOTTOM NAVIGATION ACTIONS ─────────────────── */}

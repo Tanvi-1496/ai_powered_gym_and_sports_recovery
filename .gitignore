@@ -28,3 +28,9 @@ pnpm-debug.log*
 # OS / editor
 .DS_Store
 Thumbs.db
+# Local SQLite database files
+/recovery.db
+/recovery.db.backup_*
+.vercel
+.env*
+local_assets_backup/

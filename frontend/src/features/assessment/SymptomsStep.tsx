@@ -193,14 +193,19 @@ export const SymptomsStep: React.FC<SymptomsStepProps> = ({
         </div>
 
         {selectedSymptoms.includes("other") && (
-          <div className="pt-2 animate-step-slide-right">
-            <input
-              type="text"
-              value={formData.custom_symptom || ""}
-              onChange={(e) => updateFormData({ custom_symptom: e.target.value })}
-              placeholder="Describe other sensations (e.g. popping sound, burning sensation)..."
-              className="w-full rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[#FFFDF9] placeholder-[#B8AEC8]/70 bg-[#21183A] border border-[#7C3AED]/30 focus:border-[#8B5CF6] outline-none"
-            />
+          <div className="pt-2 space-y-2 animate-step-slide-right">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <input
+                type="text"
+                value={formData.custom_symptom || ""}
+                onChange={(e) => updateFormData({ custom_symptom: e.target.value })}
+                placeholder="Describe other sensations (e.g. popping sound, burning sensation)..."
+                className="w-full rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[#FFFDF9] placeholder-[#B8AEC8]/70 bg-[#21183A] border border-[#7C3AED]/30 focus:border-[#8B5CF6] outline-none"
+              />
+            </div>
+            <p className="text-[11px] text-[#B8AEC8]/70 italic">
+              Powered by Gemini AI — describes your sensation for biomechanical load analysis without medical diagnosis.
+            </p>
           </div>
         )}
 

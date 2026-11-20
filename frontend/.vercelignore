@@ -1,0 +1,17 @@
+.git
+.github
+node_modules
+dist
+dist-ssr
+.cache
+.vercel
+.env*
+*.local
+
+# Ignore raw oversized / duplicate assets not used in production
+public/models/revora-anatomy-working.glb
+public/models/*working*.glb
+public/models/*copy*.glb
+src/assets/revora-athlete.mp4
+public/videos/gemini_generated_video_baccbb7f.mp4
+public/videos/*copy*.mp4

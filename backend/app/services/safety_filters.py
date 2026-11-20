@@ -195,7 +195,7 @@ def evaluate_assessment_safety(
 ) -> SafetyEvaluation:
     """
     Clinical safety filter evaluation pipeline.
-    
+
     Triage Hierarchy:
     1. Validate necessary data (missing body area -> withhold for insufficient data).
     2. Check emergency warning signs -> withhold with emergency triage level.

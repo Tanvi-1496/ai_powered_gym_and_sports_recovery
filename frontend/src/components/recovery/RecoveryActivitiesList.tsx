@@ -12,6 +12,12 @@ import {
   PlayCircle,
 } from "lucide-react";
 import type { RecoveryActivity } from "@/types/recovery";
+import {
+  simplifyExerciseBenefit,
+  simplifySafetyNote,
+  simplifyInstructions,
+  formatTargetArea,
+} from "@/utils/textSimplifier";
 
 export interface RecoveryActivitiesListProps {
   activities?: RecoveryActivity[];
@@ -30,7 +36,7 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
   error = null,
   onRetry,
   title = "Your Recommended Exercises",
-  description = "Review your available exercises, follow the supplied instructions, and track your activity completion.",
+  description = "Perform each exercise slowly and within your comfort level. Tap 'Mark Complete' as you finish.",
 }) => {
   const hasActivities = activities && activities.length > 0;
 
@@ -123,7 +129,7 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
                     <div className="space-y-1">
                       {act.targetArea && (
                         <span className="text-[10px] font-bold font-mono uppercase tracking-wider text-[#FDBA8C] px-2.5 py-0.5 rounded-md bg-[#7C3AED]/15 border border-[#7C3AED]/25 inline-block">
-                          {act.targetArea}
+                          {formatTargetArea(act.targetArea)}
                         </span>
                       )}
                       <h3 className="text-base sm:text-lg font-bold text-[#FFFDF9] leading-snug">
@@ -134,7 +140,7 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
                     <button
                       type="button"
                       onClick={() => onToggleComplete && onToggleComplete(act.id)}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
                         isCompleted
                           ? "bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 hover:bg-[#10B981]/30"
                           : "bg-[#21183A] text-[#B8AEC8] hover:text-[#FFFDF9] border border-[#7C3AED]/30 hover:border-[#F97368]/50"
@@ -170,11 +176,16 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
                     </div>
                   )}
 
-                  {/* Description (If supplied) */}
+                  {/* Why It May Help */}
                   {act.description && (
-                    <p className="text-xs sm:text-sm text-[#B8AEC8] leading-relaxed">
-                      {act.description}
-                    </p>
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#FDBA8C] block">
+                        Why It May Help
+                      </span>
+                      <p className="text-xs sm:text-sm text-[#E9E2F5] leading-relaxed">
+                        {simplifyExerciseBenefit(act.description)}
+                      </p>
+                    </div>
                   )}
 
                   {/* Numbered Instructions (If structured instructions exist) */}
@@ -182,10 +193,10 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
                     <div className="p-3.5 rounded-xl bg-[#120D26]/70 border border-[#7C3AED]/20 space-y-2">
                       <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#FDBA8C]">
                         <ListOrdered className="w-3.5 h-3.5" />
-                        <span>Step-by-Step Instructions</span>
+                        <span>How to Perform It</span>
                       </div>
                       <ol className="space-y-1.5 pl-4 text-xs text-[#E9E2F5]/90 list-decimal leading-relaxed">
-                        {structuredInstructions.map((step, idx) => (
+                        {simplifyInstructions(structuredInstructions).map((step, idx) => (
                           <li key={idx}>{step}</li>
                         ))}
                       </ol>
@@ -230,11 +241,24 @@ export const RecoveryActivitiesList: React.FC<RecoveryActivitiesListProps> = ({
                     </div>
                   )}
 
-                  {/* Safety Note or Contraindication (Only when provided) */}
+                  {/* Safety Note (Only when provided) */}
                   {act.safetyNote && (
                     <div className="p-3 rounded-xl bg-[#FFB020]/10 border border-[#FFB020]/25 text-[11px] text-[#FDBA8C] flex items-start gap-2">
                       <ShieldAlert className="w-3.5 h-3.5 text-[#FFB020] shrink-0 mt-0.5" />
-                      <span className="leading-snug">{act.safetyNote}</span>
+                      <div>
+                        <span className="font-bold block text-[10px] uppercase tracking-wider">Safety Tip</span>
+                        <span className="leading-snug">{simplifySafetyNote(act.safetyNote)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reviewed & Verified Badge */}
+                  {act.reviewStatus === "approved" && (
+                    <div className="p-2.5 rounded-xl bg-[#10B981]/10 border border-[#10B981]/20 text-[11px] flex items-center justify-between text-[#10B981]">
+                      <span className="text-[11px] font-semibold flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Recommended Exercise</span>
+                      </span>
                     </div>
                   )}
                 </div>

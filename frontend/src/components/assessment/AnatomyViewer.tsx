@@ -276,13 +276,37 @@ function ModelScene({
     });
   }, [scene, activeLayers, selectedMeshNames, confirmedMeshNames, hoveredMeshName]);
 
+  // Helper to extract the topmost visible mesh from R3F event intersections
+  const findTopmostVisibleMesh = (e: any): THREE.Mesh | null => {
+    if (Array.isArray(e.intersections) && e.intersections.length > 0) {
+      for (const hit of e.intersections) {
+        const obj = hit.object as THREE.Mesh;
+        if (obj && obj.isMesh && obj.visible) {
+          return obj;
+        }
+      }
+    }
+    const target = e.object as THREE.Mesh;
+    return target && target.isMesh && target.visible ? target : null;
+  };
+
+  // Track click history for cycling through overlapping visible structures at the same point
+  const lastClickRef = useRef<{ point: THREE.Vector3 | null; cycleIndex: number; time: number }>({
+    point: null,
+    cycleIndex: 0,
+    time: 0,
+  });
+
   // Pointer move / raycast hover handler
   const handlePointerOver = (e: any) => {
     e.stopPropagation();
-    const mesh = e.object as THREE.Mesh;
-    if (!mesh || !mesh.visible) return;
+    const mesh = findTopmostVisibleMesh(e);
+    if (!mesh) {
+      onHoverMesh(null);
+      return;
+    }
 
-    const struct = getAnatomyForMesh(mesh.name);
+    const struct = getAnatomyForMesh(mesh.name, mesh);
     if (struct) {
       onHoverMesh(struct, e);
     }
@@ -295,10 +319,48 @@ function ModelScene({
 
   const handleClick = (e: any) => {
     e.stopPropagation();
-    const mesh = e.object as THREE.Mesh;
-    if (!mesh || !mesh.visible) return;
 
-    const struct = getAnatomyForMesh(mesh.name);
+    // Collect all visible meshes along the click ray
+    const visibleHits: THREE.Mesh[] = [];
+    if (Array.isArray(e.intersections) && e.intersections.length > 0) {
+      for (const hit of e.intersections) {
+        const obj = hit.object as THREE.Mesh;
+        if (obj && obj.isMesh && obj.visible && !visibleHits.includes(obj)) {
+          visibleHits.push(obj);
+        }
+      }
+    }
+
+    let targetMesh: THREE.Mesh | null = null;
+    const now = Date.now();
+
+    if (visibleHits.length > 1) {
+      // If clicking near the same location within 1.8s, cycle through deeper structures
+      const hitPoint = e.point as THREE.Vector3;
+      const prev = lastClickRef.current;
+      const isSameLocation = prev.point && hitPoint && prev.point.distanceTo(hitPoint) < 0.05;
+      const isRecent = now - prev.time < 1800;
+
+      let nextIndex = 0;
+      if (isSameLocation && isRecent) {
+        nextIndex = (prev.cycleIndex + 1) % visibleHits.length;
+      }
+      targetMesh = visibleHits[nextIndex];
+      lastClickRef.current = { point: hitPoint ? hitPoint.clone() : null, cycleIndex: nextIndex, time: now };
+    } else if (visibleHits.length === 1) {
+      targetMesh = visibleHits[0];
+      lastClickRef.current = { point: e.point ? e.point.clone() : null, cycleIndex: 0, time: now };
+    } else {
+      const fallback = e.object as THREE.Mesh;
+      if (fallback && fallback.isMesh && fallback.visible) {
+        targetMesh = fallback;
+      }
+    }
+
+    if (!targetMesh) return;
+
+    // Guaranteed single-structure part selection, never promoted to broad parent group
+    const struct = getAnatomyForMesh(targetMesh.name, targetMesh);
     if (struct) {
       onClickMesh(struct);
     }
@@ -724,7 +786,7 @@ export const AnatomyViewer: React.FC<AnatomyViewerProps> = ({
 
           {/* BVH Spatial Acceleration & GLB Scene */}
           <Suspense fallback={null}>
-            <Bvh firstHitOnly>
+            <Bvh firstHitOnly={false}>
               <ModelScene
                 modelUrl={modelUrl}
                 activeLayers={activeLayers}

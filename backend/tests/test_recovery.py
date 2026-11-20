@@ -227,3 +227,41 @@ def test_get_personalized_recovery_plan():
     assert len(plan["phases"][0]["activities"]) > 0
     assert len(plan["safetyGuidelines"]) > 0
     assert "evidence-based" in plan["disclaimer"].lower() or "wellness" in plan["disclaimer"].lower()
+
+
+def test_unauthenticated_recovery_plan_rejected():
+    """Verify recovery plan endpoint rejects unauthenticated access."""
+    plan_res = client.get("/api/v1/recovery/plan")
+    assert plan_res.status_code == 401
+
+
+def test_list_checkins_includes_prediction_for_latest():
+    """Verify list_checkins endpoint attaches computed prediction to the latest check-in."""
+    user_id = "66666666-6666-6666-6666-666666666666"
+    token = make_test_token(user_id)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. Initially empty
+    list_res_empty = client.get("/api/v1/recovery/checkins", headers=headers)
+    assert list_res_empty.status_code == 200
+    assert list_res_empty.json() == []
+
+    # 2. Create checkin
+    payload = {
+        "sleep_hours": 7.5,
+        "resting_heart_rate": 62,
+        "hrv_ms": 55.0,
+        "soreness": 3,
+        "energy_level": 8,
+    }
+    create_res = client.post("/api/v1/recovery/checkins", json=payload, headers=headers)
+    assert create_res.status_code == 201
+
+    # 3. Retrieve checkins -> latest must have prediction populated
+    list_res = client.get("/api/v1/recovery/checkins", headers=headers)
+    assert list_res.status_code == 200
+    items = list_res.json()
+    assert len(items) == 1
+    assert items[0]["prediction"] is not None
+    assert 0.0 <= items[0]["prediction"]["score"] <= 100.0
+    assert items[0]["prediction"]["tier"] in ["optimal", "moderate", "low", "critical"]

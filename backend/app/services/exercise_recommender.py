@@ -68,7 +68,7 @@ def recommend_exercises(
 ) -> ExerciseRecommendationResponse:
     """
     Core Python recommendation engine for Module 3.
-    
+
     Triage Pipeline:
     1. Evaluate safety: separates emergency signs from prompt-assessment signs,
        withholds severe pain (>= 8/10) unless clinician clearance is explicitly granted.
